@@ -48,13 +48,13 @@ class Settings(BaseSettings):
     # V2: Vector Embeddings & RAG Configuration
     # ==========================================
     # Flag: LOCAL_EMBED / USE_LOCAL_EMBEDDINGS
-    # False = Cloud API (Google Gemini text-embedding-004)
-    # True  = Local Embeddings (Ollama / SentenceTransformers / In-Memory Fallback)
+    # False = Cloud API (Google Gemini models/gemini-embedding-001)
+    # True  = Local Embeddings (Ollama / SentenceTransformers / Fast Fallback)
     USE_LOCAL_EMBEDDINGS: bool = False
     LOCAL_EMBED: bool = False  # Friendly alias
 
-    # Cloud Embedding Model
-    GEMINI_EMBEDDING_MODEL: str = "models/text-embedding-004"
+    # Cloud Embedding Model (Supported Gemini embedding models: models/gemini-embedding-001, models/gemini-embedding-2)
+    GEMINI_EMBEDDING_MODEL: str = "models/gemini-embedding-001"
 
     # Local Embedding Settings
     LOCAL_EMBEDDING_BASE_URL: str = "http://localhost:11434"

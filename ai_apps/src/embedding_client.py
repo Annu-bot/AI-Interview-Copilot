@@ -1,6 +1,6 @@
 """
 Vector Embedding Client supporting dual routing:
-1. Cloud API (Google Gemini text-embedding-004) - Default
+1. Cloud API (Google Gemini models/gemini-embedding-001 / models/gemini-embedding-2) - Default
 2. Local Embedding Engine (Ollama / Local Embeddings) when LOCAL_EMBED=True
 """
 
@@ -17,7 +17,7 @@ logger = logging.getLogger(__name__)
 
 class EmbeddingClient:
     """
-    Unified Vector Embedding Client for RAG pipeline.
+    Unified Vector Embedding Client for RAG pipeline with automatic cloud model fallback.
     """
 
     def __init__(self):
@@ -25,6 +25,7 @@ class EmbeddingClient:
         self.gemini_model = settings.GEMINI_EMBEDDING_MODEL
         self.local_base_url = settings.LOCAL_EMBEDDING_BASE_URL
         self.local_model = settings.LOCAL_EMBEDDING_MODEL
+        self._active_cloud_model = None
         self._init_client()
 
     def _init_client(self):
@@ -33,14 +34,15 @@ class EmbeddingClient:
             try:
                 import google.generativeai as genai
                 genai.configure(api_key=settings.GEMINI_API_KEY)
-                logger.info(f"Initialized Cloud Gemini Embedding Client ({self.gemini_model})")
+                self._active_cloud_model = self.gemini_model
+                logger.info(f"Initialized Cloud Gemini Embedding Client ({self._active_cloud_model})")
             except Exception as e:
                 logger.warning(f"Could not configure google.generativeai for embeddings: {e}")
         else:
             logger.info(f"Initialized Local Embedding Client ({self.local_model} at {self.local_base_url})")
 
     def get_embedding(self, text: str) -> List[float]:
-        """Generates a 768-dimensional vector embedding for a single text chunk."""
+        """Generates a vector embedding for a single text chunk."""
         if not text or not text.strip():
             return [0.0] * 768
 
@@ -61,19 +63,35 @@ class EmbeddingClient:
         return embeddings
 
     def _get_cloud_embedding(self, text: str) -> List[float]:
-        """Calls Google Gemini Embeddings API."""
-        try:
-            import google.generativeai as genai
-            result = genai.embed_content(
-                model=self.gemini_model,
-                content=text,
-                task_type="retrieval_document"
-            )
-            if "embedding" in result:
-                return result["embedding"]
-        except Exception as e:
-            logger.warning(f"Cloud Gemini embedding failed ({e}), falling back to deterministic local embedding")
+        """
+        Calls Google Gemini Embeddings API with graceful multi-model fallback.
+        Tries active model first, then known supported models.
+        """
+        candidate_models = [
+            self._active_cloud_model or self.gemini_model,
+            "models/gemini-embedding-001",
+            "models/gemini-embedding-2",
+            "models/gemini-embedding-2-preview"
+        ]
+        # Remove duplicates while preserving order
+        unique_models = list(dict.fromkeys(m for m in candidate_models if m))
 
+        import google.generativeai as genai
+
+        for model_name in unique_models:
+            try:
+                result = genai.embed_content(
+                    model=model_name,
+                    content=text,
+                    task_type="retrieval_document"
+                )
+                if "embedding" in result and result["embedding"]:
+                    self._active_cloud_model = model_name
+                    return result["embedding"]
+            except Exception as e:
+                logger.debug(f"Gemini embedding model '{model_name}' failed ({e}), trying next candidate...")
+
+        logger.warning("All Cloud Gemini embedding candidates failed, falling back to deterministic local embedding")
         return self._generate_deterministic_embedding(text)
 
     def _get_local_embedding(self, text: str) -> List[float]:
@@ -109,13 +127,11 @@ class EmbeddingClient:
             return vec.tolist()
 
         for i, token in enumerate(tokens):
-            # MD5 hash mapped to vector space
             h = int(hashlib.md5(token.encode("utf-8")).hexdigest(), 16)
             idx = h % dim
             val = ((h >> 8) % 1000) / 1000.0 - 0.5
             vec[idx] += float(val)
 
-        # Normalize vector
         norm = np.linalg.norm(vec)
         if norm > 0:
             vec = vec / norm

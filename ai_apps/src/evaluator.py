@@ -9,7 +9,7 @@ from ai_apps.src.rag_service import rag_service
 class AnswerEvaluator:
     """
     Evaluates candidate responses against interview questions and evaluation criteria.
-    Provides strict scoring, constructive feedback, and benchmark model answers,
+    Provides strict scoring, constructive feedback, and concise benchmark model answers,
     grounded in resume context and job requirements.
     """
 
@@ -50,13 +50,16 @@ class AnswerEvaluator:
 
 ### TASK:
 Critique the candidate's answer using the rubric and grounded context.
-Identify:
-1. Score out of 10.0 (float).
-2. Exact strengths observed.
-3. Missing technical points, depth deficiencies, or inaccuracies.
-4. Detailed feedback explaining the score.
-5. Ideal model answer (how a Staff/Principal engineer would answer succinctly and powerfully).
-6. Practical tips for answering in real interviews.
+Provide:
+1. score_out_of_10: Float (0.0 to 10.0).
+2. strengths: List of exact positive points demonstrated.
+3. missing_points_and_gaps: List of specific technical points missed.
+4. detailed_feedback: Concise paragraph explaining the score.
+5. ideal_model_answer: A CONCISE, STAFF-LEVEL ANSWER (Under 120 words) formatted for real verbal delivery:
+   - Direct 1-line definition
+   - 2-3 bullet points covering mechanisms & trade-offs
+   - 1-line production example / metric
+6. interview_tips: 2-3 actionable delivery and structuring tips.
 
 Return the result strictly conforming to the AnswerEvaluation schema.
 """

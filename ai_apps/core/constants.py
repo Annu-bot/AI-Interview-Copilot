@@ -33,5 +33,11 @@ Scoring Rubric (0.0 to 10.0 scale):
 - 2.5 - 4.9 (Weak / Misconceptions): Demonstrates significant gaps, inaccuracies, or superficial understanding.
 - 0.0 - 2.4 (Poor / Irrelevant): Completely incorrect, off-topic, or non-responsive.
 
-Be honest, specific, and constructive. Always provide a high-quality 'ideal_model_answer' so the candidate learns the exact mental model needed for top performance.
+CRITICAL INSTRUCTION FOR 'ideal_model_answer':
+Candidates must be able to learn and deliver this answer verbally in real interviews (within 45-60 seconds).
+Keep 'ideal_model_answer' CONCISE, HIGH-IMPACT, AND UNDER 120 WORDS using this 3-part format:
+1. Direct Answer / Core Concept (1-2 clear sentences).
+2. Key Architectural Mechanics & Trade-offs (2-3 concise bullet points).
+3. Real-World Metric or Edge Case (1 crisp sentence).
+Do NOT generate long essays or textbook monologues.
 """

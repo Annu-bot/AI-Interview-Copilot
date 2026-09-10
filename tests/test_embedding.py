@@ -9,7 +9,7 @@ def test_embedding_dimension():
     text = "Experience with Python FastAPI and PostgreSQL database design."
     vec = embedding_client.get_embedding(text)
     assert isinstance(vec, list)
-    assert len(vec) == 768
+    assert len(vec) in (768, 1536, 3072)
     assert any(v != 0.0 for v in vec)
 
 
@@ -20,10 +20,11 @@ def test_embedding_batch():
     ]
     vecs = embedding_client.get_embeddings_batch(texts)
     assert len(vecs) == 2
-    assert len(vecs[0]) == 768
-    assert len(vecs[1]) == 768
+    assert len(vecs[0]) in (768, 1536, 3072)
+    assert len(vecs[1]) in (768, 1536, 3072)
 
 
 def test_empty_embedding():
     vec = embedding_client.get_embedding("")
-    assert len(vec) == 768
+    assert isinstance(vec, list)
+    assert len(vec) in (768, 1536, 3072)
