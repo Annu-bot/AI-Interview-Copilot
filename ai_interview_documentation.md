@@ -1,6 +1,6 @@
 # AI Interview Copilot — Technical Architecture & Troubleshooting Guide
 
-This document records the technical architecture, design decisions, prompt engineering standards, and debugging post-mortems for future reference.
+This document records the technical architecture, design decisions, prompt engineering standards, ChromaDB deep-dive, and debugging post-mortems for future reference.
 
 ---
 
@@ -35,7 +35,53 @@ The system is a FastAPI-powered technical interview preparation copilot structur
 
 ---
 
-## 2. Troubleshooting & Error Post-Mortems
+## 2. ChromaDB Deep-Dive: What It Is & How It Works
+
+### 1. What is ChromaDB?
+- ChromaDB is an open-source, embedded (in-process) **Vector Database**.
+- Just like SQLite is an embedded relational database (no need to run a separate SQL server), ChromaDB runs directly inside your Python application process.
+- Installed via:
+  ```bash
+  pip install chromadb numpy
+  ```
+
+### 2. Why ChromaDB instead of standard SQL?
+- Traditional SQL databases search text by **exact keyword matching** (`WHERE text LIKE '%Kafka%'`).
+- If a candidate writes *"Asynchronous message streaming with RabbitMQ"* and the JD requires *"Event-Driven Distributed Architecture"*, SQL returns **zero matches**.
+- ChromaDB stores text as **high-dimensional numerical vectors (embeddings)** that capture semantic meaning.
+- It performs Approximate Nearest Neighbor (ANN) search via **Cosine Similarity** to retrieve passages with matching *meaning*, regardless of specific phrasing.
+
+### 3. How ChromaDB Works in Code (`ai_apps/src/vector_store.py`):
+
+1. **Initialize Persistent Client:**
+   ```python
+   client = chromadb.PersistentClient(path="data/chroma")
+   ```
+2. **Create Session Collection:**
+   ```python
+   collection = client.create_collection(name=f"session_{session_id}")
+   ```
+3. **Index Chunks & Embeddings:**
+   ```python
+   collection.add(
+       ids=["chunk_1", "chunk_2"],
+       documents=["[Experience] Built Redis caching...", "[Projects] Kafka pipeline..."],
+       embeddings=[[0.012, -0.045, ...], ...],
+       metadatas=[{"source": "resume", "section": "Experience"}, ...]
+   )
+   ```
+4. **Query (Semantic Retrieval):**
+   ```python
+   results = collection.query(
+       query_embeddings=[query_vector],
+       n_results=3,
+       where={"source": "resume"}
+   )
+   ```
+
+---
+
+## 3. Troubleshooting & Error Post-Mortems
 
 ### Error #001: Gemini Embedding 404 (`models/text-embedding-004 not found for v1beta`)
 
@@ -50,7 +96,7 @@ Cloud Gemini embedding failed (404 models/text-embedding-004 is not found for AP
 
 #### Resolution:
 1. **Identified Supported Models:** Queried `genai.list_models()` to inspect the exact endpoints supporting `embedContent`:
-   - `models/gemini-embedding-001` (Active Production)
+   - `models/gemini-embedding-001` (Active Production - 3072 dims)
    - `models/gemini-embedding-2`
    - `models/gemini-embedding-2-preview`
 2. **Updated Configuration:** Updated default `GEMINI_EMBEDDING_MODEL` in `config/settings.py` and environment templates to `models/gemini-embedding-001`.
@@ -58,7 +104,7 @@ Cloud Gemini embedding failed (404 models/text-embedding-004 is not found for AP
 
 ---
 
-## 3. Answer Design: Concise & Verbal-Ready Benchmark Answers
+## 4. Answer Design: Concise & Verbal-Ready Benchmark Answers
 
 ### Problem:
 Early versions produced long (400-500 word) textbook answers. While technically thorough, long monologues are:
@@ -83,7 +129,7 @@ Updated `SYSTEM_PROMPT_EVALUATION` and `ai_apps/src/evaluator.py` to enforce a s
 
 ---
 
-## 4. Configuration Reference
+## 5. Configuration Reference
 
 | Setting | Default | Description |
 | :--- | :--- | :--- |
