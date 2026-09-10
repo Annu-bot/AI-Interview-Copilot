@@ -1,4 +1,8 @@
-// Global Application State
+// -------------------------------------------------------------
+// AI Interview Copilot - Frontend Application Core
+// -------------------------------------------------------------
+
+// Global State
 let activeSessionId = null;
 let activeResumeText = "";
 let activeJdText = "";
@@ -7,10 +11,118 @@ let currentQuestions = [];
 let currentQuestionIndex = 0;
 let userEvaluations = [];
 
+// Timer State
+let timerInterval = null;
+let timerSeconds = 0;
+
+// Speech Recognition State
+let recognition = null;
+let isRecordingVoice = false;
+
 // Initialize on page load
 document.addEventListener("DOMContentLoaded", async () => {
   await refreshHistoryList();
+  setupDragAndDrop();
+  setupKeyboardShortcuts();
+  initSpeechRecognition();
 });
+
+// Setup Global Keyboard Shortcuts
+function setupKeyboardShortcuts() {
+  document.addEventListener("keydown", (e) => {
+    // Ctrl + Enter or Cmd + Enter to trigger action
+    if ((e.ctrlKey || e.metaKey) && e.key === "Enter") {
+      const interviewSection = document.getElementById("interviewSection");
+      if (interviewSection && !interviewSection.classList.contains("hidden")) {
+        const submitBtn = document.getElementById("submitAnswerBtn");
+        if (submitBtn && !submitBtn.disabled) {
+          submitAnswerForEvaluation();
+        }
+      } else {
+        startInterviewFlow();
+      }
+    }
+  });
+}
+
+// Drag & Drop File Upload Handlers
+function setupDragAndDrop() {
+  setupDropZone("resumeDropzone", "resumeFile", "resumeText", "resumeFileStatus");
+  setupDropZone("jdDropzone", "jdFile", "jdText", "jdFileStatus");
+}
+
+function setupDropZone(dropzoneId, inputId, textId, statusId) {
+  const dropzone = document.getElementById(dropzoneId);
+  if (!dropzone) return;
+
+  ["dragenter", "dragover"].forEach((eventName) => {
+    dropzone.addEventListener(eventName, (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      dropzone.classList.add("dragover");
+    });
+  });
+
+  ["dragleave", "drop"].forEach((eventName) => {
+    dropzone.addEventListener(eventName, (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      dropzone.classList.remove("dragover");
+    });
+  });
+
+  dropzone.addEventListener("drop", (e) => {
+    const dt = e.dataTransfer;
+    const files = dt.files;
+    if (files.length > 0) {
+      const fakeEvent = { target: { files: files } };
+      handleFileUpload(fakeEvent, textId, statusId);
+    }
+  });
+}
+
+// Character & Word Counter Helpers
+function updateCharCount(textareaId, counterId) {
+  const text = document.getElementById(textareaId).value;
+  document.getElementById(counterId).textContent = `${text.length} chars`;
+}
+
+function updateAnswerWordCount() {
+  const text = document.getElementById("userAnswerInput").value.trim();
+  const words = text ? text.split(/\s+/).length : 0;
+  document.getElementById("answerWordCount").textContent = `${words} words`;
+}
+
+// Quick Sample Demo Loader
+function loadSampleData() {
+  const sampleResume = `SENIOR BACKEND ENGINEER
+Experience:
+- 5+ years designing RESTful APIs and distributed backend services in Python (FastAPI, Django).
+- Built relational database schemas in PostgreSQL with SQLAlchemy, optimizing slow queries with indexing.
+- Implemented asynchronous worker queues using Redis and Celery for background processing.
+- Containerized applications using Docker and configured basic CI/CD pipelines via GitHub Actions.
+
+Technical Skills: Python, FastAPI, Django, PostgreSQL, Redis, Docker, Git, REST APIs, Linux.`;
+
+  const sampleJD = `Senior Backend Engineer (Distributed Systems)
+Responsibilities:
+- Architect high-throughput, low-latency microservices handling millions of events daily.
+- Design event-driven architectures with Apache Kafka or RabbitMQ.
+- Lead system decomposition from monolith to microservices and implement distributed caching strategies.
+- Manage Kubernetes clusters in AWS (EKS), ensuring 99.99% uptime and auto-scaling.
+- Mentor junior engineers and conduct architectural design reviews.
+
+Requirements:
+- 5+ years experience in Python or Go.
+- Deep expertise in Event-Driven Architecture (Kafka / RabbitMQ).
+- Strong knowledge of Distributed Systems (CAP theorem, consensus, caching, sharding).
+- Hands-on experience with Kubernetes and AWS.`;
+
+  document.getElementById("resumeText").value = sampleResume;
+  document.getElementById("jdText").value = sampleJD;
+  updateCharCount("resumeText", "resumeCharCount");
+  updateCharCount("jdText", "jdCharCount");
+}
 
 // Refresh history count badge
 async function refreshHistoryList() {
@@ -53,11 +165,15 @@ async function handleFileUpload(event, targetTextareaId, statusId) {
       throw new Error(data.detail || "Failed to parse document");
     }
     document.getElementById(targetTextareaId).value = data.text;
-    statusEl.textContent = `✓ Extracted ${data.character_count} chars from ${file.name}`;
-    statusEl.className = "text-xs text-emerald-400";
+    statusEl.textContent = `Loaded ${file.name} (${data.character_count} chars)`;
+    statusEl.className = "text-xs font-mono text-emerald-400 mt-1";
+    
+    // Update counters
+    if (targetTextareaId === "resumeText") updateCharCount("resumeText", "resumeCharCount");
+    if (targetTextareaId === "jdText") updateCharCount("jdText", "jdCharCount");
   } catch (err) {
-    statusEl.textContent = `⚠ ${err.message}`;
-    statusEl.className = "text-xs text-red-400";
+    statusEl.textContent = `Error: ${err.message}`;
+    statusEl.className = "text-xs font-mono text-red-400 mt-1";
   }
 }
 
@@ -74,7 +190,7 @@ async function startInterviewFlow() {
   activeResumeText = resumeText;
   activeJdText = jdText;
 
-  showLoading(true, "AI is calculating skill match score & generating customized interview questions...");
+  showLoading(true, "Evaluating skill matches & generating customized interview questions...");
 
   try {
     const res = await fetch("/api/v1/start-interview", {
@@ -105,7 +221,7 @@ async function startInterviewFlow() {
     switchToInterviewView();
     loadCurrentQuestion();
     await refreshHistoryList();
-    showActiveSessionBanner(`Active Interview: Session #${activeSessionId}`);
+    showActiveSessionBanner(`Session #${activeSessionId}`);
   } catch (err) {
     alert(`Failed to start interview: ${err.message}`);
   } finally {
@@ -122,12 +238,12 @@ function populateMatchAndSkills(data) {
   const matchedContainer = document.getElementById("matchedSkillsList");
   matchedContainer.innerHTML = "";
   if (!data.matched_skills || data.matched_skills.length === 0) {
-    matchedContainer.innerHTML = `<span class="text-xs text-slate-500">None identified</span>`;
+    matchedContainer.innerHTML = `<span class="text-xs text-zinc-500">None identified</span>`;
   } else {
     data.matched_skills.forEach((skill) => {
       const tag = document.createElement("span");
-      tag.className = "text-xs font-semibold px-2 py-0.5 rounded-md bg-emerald-500/10 text-emerald-300 border border-emerald-500/20";
-      tag.textContent = `✓ ${skill}`;
+      tag.className = "text-xs font-medium px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20";
+      tag.textContent = skill;
       matchedContainer.appendChild(tag);
     });
   }
@@ -136,12 +252,12 @@ function populateMatchAndSkills(data) {
   const missingContainer = document.getElementById("missingSkillsList");
   missingContainer.innerHTML = "";
   if (!data.missing_skills || data.missing_skills.length === 0) {
-    missingContainer.innerHTML = `<span class="text-xs text-slate-500">No major gaps identified</span>`;
+    missingContainer.innerHTML = `<span class="text-xs text-zinc-500">No major gaps identified</span>`;
   } else {
     data.missing_skills.forEach((skill) => {
       const tag = document.createElement("span");
-      tag.className = "text-xs font-semibold px-2 py-0.5 rounded-md bg-amber-500/10 text-amber-300 border border-amber-500/20";
-      tag.textContent = `⚠ ${skill}`;
+      tag.className = "text-xs font-medium px-2 py-0.5 rounded bg-amber-500/10 text-amber-400 border border-amber-500/20";
+      tag.textContent = skill;
       missingContainer.appendChild(tag);
     });
   }
@@ -172,8 +288,9 @@ function switchToInterviewView() {
   if (window.lucide) lucide.createIcons();
 }
 
-// Return to Dashboard View (Preserves all Resume & JD inputs!)
+// Return to Dashboard View
 function backToDashboard() {
+  stopTimer();
   document.getElementById("heroSection").classList.remove("hidden");
   document.getElementById("inputSection").classList.remove("hidden");
   document.getElementById("actionSection").classList.remove("hidden");
@@ -181,8 +298,14 @@ function backToDashboard() {
   document.getElementById("finalSummarySection").classList.add("hidden");
 
   // Restore textarea values
-  if (activeResumeText) document.getElementById("resumeText").value = activeResumeText;
-  if (activeJdText) document.getElementById("jdText").value = activeJdText;
+  if (activeResumeText) {
+    document.getElementById("resumeText").value = activeResumeText;
+    updateCharCount("resumeText", "resumeCharCount");
+  }
+  if (activeJdText) {
+    document.getElementById("jdText").value = activeJdText;
+    updateCharCount("jdText", "jdCharCount");
+  }
 
   document.getElementById("inputSection").scrollIntoView({ behavior: "smooth" });
   if (window.lucide) lucide.createIcons();
@@ -201,10 +324,18 @@ function loadCurrentQuestion() {
 
   const q = currentQuestions[currentQuestionIndex];
   document.getElementById("questionCounter").textContent = `${currentQuestionIndex + 1}/${currentQuestions.length}`;
-  document.getElementById("questionCategoryBadge").textContent = q.category || "Technical Interview";
+  document.getElementById("questionCategoryBadge").textContent = q.category || "Technical Assessment";
   document.getElementById("questionDifficultyBadge").textContent = q.difficulty || "Medium";
   document.getElementById("targetSkillDisplay").textContent = `Target: ${q.target_skill_or_topic || "Core Topic"}`;
   document.getElementById("currentQuestionText").textContent = q.question_text || "";
+
+  // Progress Bar
+  const progressPercent = Math.round(((currentQuestionIndex + 1) / currentQuestions.length) * 100);
+  const progressBarFill = document.getElementById("progressBarFill");
+  if (progressBarFill) progressBarFill.style.width = `${progressPercent}%`;
+
+  // Start question timer
+  startTimer();
 
   // Check if answer was already evaluated for this question
   const existingEval = userEvaluations.find((e) => e.question_id === q.id || (e.question && e.question.id === q.id));
@@ -213,12 +344,14 @@ function loadCurrentQuestion() {
     document.getElementById("userAnswerInput").value = existingEval.user_answer || existingEval.answer || "";
     document.getElementById("userAnswerInput").disabled = true;
     document.getElementById("submitAnswerBtn").disabled = true;
+    updateAnswerWordCount();
     renderEvaluation(existingEval.evaluation || existingEval);
   } else {
     document.getElementById("userAnswerInput").value = "";
     document.getElementById("userAnswerInput").disabled = false;
     document.getElementById("submitAnswerBtn").disabled = false;
     document.getElementById("liveEvaluationCard").classList.add("hidden");
+    updateAnswerWordCount();
   }
 
   document.getElementById("interviewSection").scrollIntoView({ behavior: "smooth" });
@@ -229,13 +362,14 @@ function loadCurrentQuestion() {
 async function submitAnswerForEvaluation() {
   const userAnswer = document.getElementById("userAnswerInput").value.trim();
   if (!userAnswer) {
-    alert("Please type your response before submitting.");
+    alert("Please provide your response before submitting.");
     return;
   }
 
+  stopTimer();
   const q = currentQuestions[currentQuestionIndex];
 
-  showLoading(true, "Staff Engineer Evaluator is scoring your response & saving to history...");
+  showLoading(true, "Staff Engineer Evaluator is scoring your response...");
 
   try {
     const res = await fetch("/api/v1/evaluate-answer", {
@@ -287,16 +421,16 @@ function renderEvaluation(evalData) {
   const scoreLabel = document.getElementById("evalScoreLabel");
   if (score >= 8.5) {
     scoreLabel.textContent = "Exceptional / Senior Level";
-    scoreBox.className = "w-14 h-14 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-xl font-black text-emerald-400";
+    scoreBox.className = "w-12 h-12 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-lg font-mono font-bold text-emerald-400";
   } else if (score >= 7.0) {
     scoreLabel.textContent = "Solid Response (Proficient)";
-    scoreBox.className = "w-14 h-14 rounded-2xl bg-indigo-500/10 border border-indigo-500/30 flex items-center justify-center text-xl font-black text-indigo-400";
+    scoreBox.className = "w-12 h-12 rounded-xl bg-blue-500/10 border border-blue-500/30 flex items-center justify-center text-lg font-mono font-bold text-blue-400";
   } else if (score >= 5.0) {
     scoreLabel.textContent = "Average (Needs More Depth)";
-    scoreBox.className = "w-14 h-14 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-xl font-black text-amber-400";
+    scoreBox.className = "w-12 h-12 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-lg font-mono font-bold text-amber-400";
   } else {
     scoreLabel.textContent = "Weak / Significant Gaps";
-    scoreBox.className = "w-14 h-14 rounded-2xl bg-red-500/10 border border-red-500/30 flex items-center justify-center text-xl font-black text-red-400";
+    scoreBox.className = "w-12 h-12 rounded-xl bg-red-500/10 border border-red-500/30 flex items-center justify-center text-lg font-mono font-bold text-red-400";
   }
 
   // Strengths
@@ -334,6 +468,20 @@ function renderEvaluation(evalData) {
   if (window.lucide) lucide.createIcons();
 }
 
+// Copy Benchmark Answer
+function copyModelAnswer() {
+  const modelAnswer = document.getElementById("evalModelAnswer").textContent;
+  if (!modelAnswer) return;
+
+  navigator.clipboard.writeText(modelAnswer).then(() => {
+    const copyBtnText = document.getElementById("copyBtnText");
+    copyBtnText.textContent = "Copied!";
+    setTimeout(() => {
+      copyBtnText.textContent = "Copy Answer";
+    }, 2000);
+  });
+}
+
 // Next Question
 function nextQuestion() {
   currentQuestionIndex++;
@@ -342,6 +490,7 @@ function nextQuestion() {
 
 // Final Summary Screen
 function showFinalSummary() {
+  stopTimer();
   document.getElementById("interviewSection").classList.add("hidden");
   document.getElementById("finalSummarySection").classList.remove("hidden");
   if (window.lucide) lucide.createIcons();
@@ -349,6 +498,7 @@ function showFinalSummary() {
 
 // Reset / Start Fresh Session
 function createNewSession() {
+  stopTimer();
   activeSessionId = null;
   activeResumeText = "";
   activeJdText = "";
@@ -364,6 +514,9 @@ function createNewSession() {
   document.getElementById("interviewSection").classList.add("hidden");
   document.getElementById("finalSummarySection").classList.add("hidden");
   document.getElementById("activeSessionBanner").classList.add("hidden");
+
+  updateCharCount("resumeText", "resumeCharCount");
+  updateCharCount("jdText", "jdCharCount");
 
   document.getElementById("heroSection").classList.remove("hidden");
   document.getElementById("inputSection").classList.remove("hidden");
@@ -382,45 +535,143 @@ function showActiveSessionBanner(title) {
   if (window.lucide) lucide.createIcons();
 }
 
-// ==========================================
+// Live Question Timer Logic
+function startTimer() {
+  stopTimer();
+  timerSeconds = 0;
+  updateTimerDisplay();
+  timerInterval = setInterval(() => {
+    timerSeconds++;
+    updateTimerDisplay();
+  }, 1000);
+}
+
+function stopTimer() {
+  if (timerInterval) {
+    clearInterval(timerInterval);
+    timerInterval = null;
+  }
+}
+
+function updateTimerDisplay() {
+  const mins = Math.floor(timerSeconds / 60);
+  const secs = timerSeconds % 60;
+  const timerEl = document.getElementById("questionTimer");
+  if (timerEl) {
+    timerEl.textContent = `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+  }
+}
+
+// Speech Recognition Voice Dictation
+function initSpeechRecognition() {
+  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SpeechRecognition) {
+    const voiceBtn = document.getElementById("voiceRecordBtn");
+    if (voiceBtn) voiceBtn.classList.add("hidden");
+    return;
+  }
+
+  recognition = new SpeechRecognition();
+  recognition.continuous = true;
+  recognition.interimResults = true;
+  recognition.lang = "en-US";
+
+  recognition.onresult = (event) => {
+    let transcript = "";
+    for (let i = event.resultIndex; i < event.results.length; i++) {
+      transcript += event.results[i][0].transcript;
+    }
+    const input = document.getElementById("userAnswerInput");
+    input.value = (input.value ? input.value + " " : "") + transcript;
+    updateAnswerWordCount();
+  };
+
+  recognition.onerror = (event) => {
+    console.warn("Speech recognition error:", event.error);
+    stopVoiceRecording();
+  };
+
+  recognition.onend = () => {
+    if (isRecordingVoice) stopVoiceRecording();
+  };
+}
+
+function toggleVoiceRecording() {
+  if (!recognition) {
+    alert("Speech recognition is not supported in this browser. Please try Google Chrome or Microsoft Edge.");
+    return;
+  }
+
+  if (isRecordingVoice) {
+    stopVoiceRecording();
+  } else {
+    startVoiceRecording();
+  }
+}
+
+function startVoiceRecording() {
+  try {
+    recognition.start();
+    isRecordingVoice = true;
+    const btn = document.getElementById("voiceRecordBtn");
+    btn.classList.add("mic-recording");
+    document.getElementById("voiceRecordText").textContent = "Listening...";
+  } catch (e) {
+    console.error("Could not start speech recognition", e);
+  }
+}
+
+function stopVoiceRecording() {
+  try {
+    recognition.stop();
+  } catch (e) {}
+  isRecordingVoice = false;
+  const btn = document.getElementById("voiceRecordBtn");
+  if (btn) {
+    btn.classList.remove("mic-recording");
+    document.getElementById("voiceRecordText").textContent = "Voice Dictation";
+  }
+}
+
+// -------------------------------------------------------------
 // Session History Modal & Restoration
-// ==========================================
+// -------------------------------------------------------------
 async function openHistoryModal() {
   const modal = document.getElementById("historyModal");
   modal.classList.remove("hidden");
 
   const container = document.getElementById("historyListContainer");
-  container.innerHTML = `<div class="text-center py-8 text-slate-400 text-sm">Loading past sessions...</div>`;
+  container.innerHTML = `<div class="text-center py-8 text-zinc-400 text-xs">Loading sessions...</div>`;
 
   try {
     const res = await fetch("/api/v1/sessions");
     const sessions = await res.json();
 
     if (!sessions || sessions.length === 0) {
-      container.innerHTML = `<div class="text-center py-12 text-slate-500 text-sm">No saved sessions yet.<br>Start an interview to save one!</div>`;
+      container.innerHTML = `<div class="text-center py-12 text-zinc-500 text-xs">No saved sessions yet.<br>Start an interview to save one!</div>`;
       return;
     }
 
     container.innerHTML = "";
     sessions.forEach((s) => {
       const card = document.createElement("div");
-      card.className = "bg-slate-950/80 border border-slate-800 hover:border-indigo-500/40 rounded-xl p-4 space-y-2 transition group";
+      card.className = "surface-card rounded-lg p-3.5 space-y-2 transition group hover:border-blue-500/40";
       card.innerHTML = `
         <div class="flex items-center justify-between">
-          <div class="text-xs font-bold text-white flex items-center gap-1.5">
-            <span class="px-2 py-0.5 rounded bg-indigo-500/20 text-indigo-300 font-mono">#${s.id}</span>
+          <div class="text-xs font-semibold text-white flex items-center gap-1.5">
+            <span class="px-1.5 py-0.2 rounded bg-zinc-800 text-zinc-300 font-mono text-[10px]">#${s.id}</span>
             <span>${s.role_title || "Engineering Candidate"}</span>
           </div>
-          <span class="text-xs font-black text-indigo-400 bg-indigo-950/60 px-2 py-0.5 rounded-lg border border-indigo-500/20">${s.fit_score_percentage}% Match</span>
+          <span class="text-[11px] font-mono font-bold text-blue-400 bg-blue-950/40 px-2 py-0.5 rounded border border-blue-500/20">${s.fit_score_percentage}% Match</span>
         </div>
-        <div class="text-[11px] text-slate-400">${s.created_at}</div>
-        <p class="text-xs text-slate-300 line-clamp-2">${s.resume_snippet}</p>
-        <div class="flex items-center justify-between pt-2 border-t border-slate-800/80">
-          <button onclick="restoreSession(${s.id})" class="text-xs font-semibold text-indigo-400 hover:text-indigo-300 flex items-center gap-1">
-            <i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i> Launch / Resume
+        <div class="text-[10px] text-zinc-400 font-mono">${s.created_at}</div>
+        <p class="text-xs text-zinc-300 line-clamp-2">${s.resume_snippet}</p>
+        <div class="flex items-center justify-between pt-2 border-t border-zinc-800/80">
+          <button onclick="restoreSession(${s.id})" class="text-xs font-medium text-blue-400 hover:text-blue-300 flex items-center gap-1">
+            <i data-lucide="rotate-ccw" class="w-3 h-3"></i> Resume Session
           </button>
-          <button onclick="deleteSession(${s.id}, event)" class="text-xs text-red-400/80 hover:text-red-400 p-1">
-            <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+          <button onclick="deleteSession(${s.id}, event)" class="text-xs text-red-400/70 hover:text-red-400 p-1">
+            <i data-lucide="trash-2" class="w-3 h-3"></i>
           </button>
         </div>
       `;
@@ -429,12 +680,18 @@ async function openHistoryModal() {
 
     if (window.lucide) lucide.createIcons();
   } catch (err) {
-    container.innerHTML = `<div class="text-center py-8 text-red-400 text-sm">Failed to load history: ${err.message}</div>`;
+    container.innerHTML = `<div class="text-center py-8 text-red-400 text-xs">Failed to load history: ${err.message}</div>`;
   }
 }
 
 function closeHistoryModal() {
   document.getElementById("historyModal").classList.add("hidden");
+}
+
+function closeHistoryModalOnBackdrop(event) {
+  if (event.target.id === "historyModal") {
+    closeHistoryModal();
+  }
 }
 
 // Restore a past session from SQLite Database
@@ -458,6 +715,8 @@ async function restoreSession(sessionId) {
 
     document.getElementById("resumeText").value = activeResumeText;
     document.getElementById("jdText").value = activeJdText;
+    updateCharCount("resumeText", "resumeCharCount");
+    updateCharCount("jdText", "jdCharCount");
 
     if (data.analysis) {
       populateMatchAndSkills(data.analysis);
@@ -472,7 +731,7 @@ async function restoreSession(sessionId) {
       backToDashboard();
     }
 
-    showActiveSessionBanner(`Restored Session #${sessionId} (${data.created_at})`);
+    showActiveSessionBanner(`Restored Session #${sessionId}`);
   } catch (err) {
     alert(`Failed to restore session: ${err.message}`);
   } finally {
@@ -483,7 +742,7 @@ async function restoreSession(sessionId) {
 // Delete session from DB
 async function deleteSession(sessionId, event) {
   if (event) event.stopPropagation();
-  if (!confirm(`Are you sure you want to delete session #${sessionId}?`)) return;
+  if (!confirm(`Delete interview session #${sessionId}?`)) return;
 
   try {
     const res = await fetch(`/api/v1/sessions/${sessionId}`, { method: "DELETE" });

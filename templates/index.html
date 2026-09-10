@@ -1,40 +1,47 @@
 <!DOCTYPE html>
-<html lang="en" class="h-full bg-slate-900 text-slate-100">
+<html lang="en" class="h-full bg-[#090b10] text-slate-100">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>AI Interview Copilot</title>
+  <title>AI Interview Copilot — Technical Interview Preparation</title>
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
   <!-- Lucide Icons -->
   <script src="https://unpkg.com/lucide@latest"></script>
   <link rel="stylesheet" href="/static/style.css">
 </head>
-<body class="min-h-full flex flex-col font-sans selection:bg-indigo-500 selection:text-white antialiased">
+<body class="min-h-full flex flex-col font-sans selection:bg-blue-600 selection:text-white antialiased">
   
-  <!-- Top Navigation Header -->
-  <header class="border-b border-slate-800 bg-slate-950/80 backdrop-blur sticky top-0 z-40">
+  <!-- Navigation Header -->
+  <header class="glass-nav sticky top-0 z-40">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-      <div class="flex items-center space-x-3 cursor-pointer" onclick="backToDashboard()">
-        <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg shadow-indigo-500/30">
-          <i data-lucide="bot" class="w-5 h-5 text-white"></i>
+      
+      <!-- Brand Logo -->
+      <div class="flex items-center space-x-3 cursor-pointer select-none" onclick="backToDashboard()">
+        <div class="w-9 h-9 rounded-lg bg-blue-600/10 border border-blue-500/30 flex items-center justify-center shadow-sm">
+          <i data-lucide="terminal" class="w-4 h-4 text-blue-400"></i>
         </div>
-        <div>
-          <span class="font-bold text-lg tracking-tight bg-gradient-to-r from-white to-slate-300 bg-clip-text text-transparent">AI Interview Copilot</span>
-          <span class="ml-2 text-xs font-semibold px-2 py-0.5 rounded-full bg-indigo-500/20 text-indigo-400 border border-indigo-500/30">V1</span>
+        <div class="flex items-center gap-2">
+          <span class="font-bold text-base tracking-tight text-white">Interview<span class="text-blue-400">Copilot</span></span>
+          <span class="text-[10px] uppercase font-bold tracking-widest px-2 py-0.5 rounded bg-zinc-800 text-zinc-300 border border-zinc-700/60">v1.0</span>
         </div>
       </div>
       
-      <!-- Right Navigation Actions -->
-      <div class="flex items-center space-x-3">
-        <button onclick="openHistoryModal()" class="flex items-center gap-2 text-xs font-semibold px-3.5 py-2 rounded-xl border border-slate-800 hover:border-slate-700 bg-slate-900/80 hover:bg-slate-800 text-slate-300 hover:text-white transition">
-          <i data-lucide="history" class="w-4 h-4 text-indigo-400"></i>
-          <span>History & Past Sessions</span>
-          <span id="historyCountBadge" class="ml-1 px-1.5 py-0.2 rounded-full bg-indigo-500/20 text-indigo-300 text-[10px] hidden">0</span>
+      <!-- Right Header Actions -->
+      <div class="flex items-center space-x-2.5">
+        <button onclick="loadSampleData()" class="hidden md:flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/60 border border-transparent hover:border-zinc-700/60 transition">
+          <i data-lucide="sparkles" class="w-3.5 h-3.5 text-amber-400"></i>
+          <span>Load Demo Sample</span>
         </button>
 
-        <button onclick="createNewSession()" class="flex items-center gap-1.5 text-xs font-semibold px-3.5 py-2 rounded-xl bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 transition">
-          <i data-lucide="plus-circle" class="w-4 h-4"></i>
+        <button onclick="openHistoryModal()" class="flex items-center gap-2 text-xs font-medium px-3 py-1.5 rounded-lg border border-zinc-800 hover:border-zinc-700 bg-zinc-900/90 hover:bg-zinc-800 text-zinc-300 hover:text-white transition shadow-sm">
+          <i data-lucide="history" class="w-3.5 h-3.5 text-zinc-400"></i>
+          <span>Sessions</span>
+          <span id="historyCountBadge" class="ml-0.5 px-1.5 py-0.2 rounded-full bg-blue-500/20 text-blue-300 text-[10px] font-semibold hidden">0</span>
+        </button>
+
+        <button onclick="createNewSession()" class="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-white transition shadow-sm">
+          <i data-lucide="plus" class="w-3.5 h-3.5"></i>
           <span>New Session</span>
         </button>
       </div>
@@ -44,145 +51,195 @@
   <!-- Main Container -->
   <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
     
-    <!-- Hero Title (Main Screen) -->
-    <div id="heroSection" class="text-center max-w-2xl mx-auto space-y-2">
-      <h1 class="text-3xl sm:text-4xl font-extrabold tracking-tight bg-gradient-to-r from-indigo-400 via-purple-300 to-pink-400 bg-clip-text text-transparent">
-        Targeted Technical Interview Copilot
+    <!-- Hero Header -->
+    <div id="heroSection" class="max-w-3xl space-y-2">
+      <div class="inline-flex items-center gap-2 px-2.5 py-1 rounded-md bg-zinc-900 border border-zinc-800 text-[11px] font-medium text-zinc-400">
+        <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+        Staff-Level Technical Evaluation System
+      </div>
+      <h1 class="text-2xl sm:text-3xl font-bold tracking-tight text-white">
+        Targeted Technical Interview Preparation
       </h1>
-      <p class="text-slate-400 text-sm sm:text-base">
-        Upload your resume and target job description. The AI extracts skill matches, identifies gaps, and conducts a targeted mock interview.
+      <p class="text-zinc-400 text-sm leading-relaxed">
+        Upload your candidate resume and target job description. The system maps your skills, pinpoints technical gaps, and runs an adaptive interview with real-time rubric scoring.
       </p>
     </div>
 
     <!-- Active Session Notification Banner -->
-    <div id="activeSessionBanner" class="hidden bg-indigo-950/30 border border-indigo-500/30 rounded-2xl p-4 flex items-center justify-between">
+    <div id="activeSessionBanner" class="hidden surface-card rounded-xl p-3.5 flex items-center justify-between border-blue-500/30">
       <div class="flex items-center gap-3">
-        <div class="p-2 rounded-xl bg-indigo-500/20 text-indigo-400">
-          <i data-lucide="database" class="w-5 h-5"></i>
+        <div class="p-1.5 rounded-md bg-blue-500/10 text-blue-400 border border-blue-500/20">
+          <i data-lucide="database" class="w-4 h-4"></i>
         </div>
         <div>
-          <div class="text-xs text-indigo-300 font-semibold" id="activeSessionTitle">Session Loaded</div>
-          <div class="text-xs text-slate-400" id="activeSessionDate">Active Session</div>
+          <div class="text-xs text-white font-medium" id="activeSessionTitle">Active Session</div>
+          <div class="text-[11px] text-zinc-400 font-mono" id="activeSessionDate">Session ID: -</div>
         </div>
       </div>
-      <button onclick="createNewSession()" class="text-xs text-slate-400 hover:text-white underline">
-        Clear & Start New
+      <button onclick="createNewSession()" class="text-xs text-zinc-400 hover:text-white transition">
+        Reset & Start New
       </button>
     </div>
 
-    <!-- Step 1: Inputs Grid (Resume + JD) -->
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-6" id="inputSection">
+    <!-- Step 1: Input Workbench Grid (Resume + JD) -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6" id="inputSection">
       
-      <!-- Resume Card -->
-      <div class="bg-slate-950/60 border border-slate-800 rounded-2xl p-6 flex flex-col space-y-4 relative overflow-hidden group hover:border-slate-700 transition">
+      <!-- Resume Workbench Card -->
+      <div class="surface-card rounded-xl p-5 flex flex-col space-y-4">
         <div class="flex items-center justify-between">
           <div class="flex items-center space-x-2">
-            <div class="p-2 rounded-lg bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
-              <i data-lucide="file-text" class="w-5 h-5"></i>
-            </div>
-            <h2 class="font-semibold text-white">1. Candidate Resume</h2>
+            <span class="w-5 h-5 rounded bg-zinc-800 border border-zinc-700 text-zinc-300 text-[11px] font-bold flex items-center justify-center font-mono">1</span>
+            <h2 class="text-sm font-semibold text-white">Candidate Resume</h2>
           </div>
-          <label class="text-xs text-indigo-400 hover:text-indigo-300 cursor-pointer flex items-center gap-1 font-medium bg-indigo-500/10 hover:bg-indigo-500/20 px-2.5 py-1.5 rounded-lg border border-indigo-500/20 transition">
-            <i data-lucide="upload" class="w-3.5 h-3.5"></i> Upload PDF / DOCX
+          <label class="text-xs text-zinc-300 hover:text-white cursor-pointer flex items-center gap-1.5 font-medium bg-zinc-800/80 hover:bg-zinc-700/80 px-2.5 py-1.5 rounded-lg border border-zinc-700/80 transition shadow-sm">
+            <i data-lucide="upload" class="w-3.5 h-3.5 text-zinc-400"></i>
+            <span>Upload Document</span>
             <input type="file" id="resumeFile" accept=".pdf,.docx,.txt" class="hidden" onchange="handleFileUpload(event, 'resumeText', 'resumeFileStatus')">
           </label>
         </div>
-        <div id="resumeFileStatus" class="text-xs text-slate-400 hidden"></div>
-        <textarea id="resumeText" rows="11" class="w-full bg-slate-900 border border-slate-800 rounded-xl p-3.5 text-xs sm:text-sm text-slate-200 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 font-mono transition resize-none" placeholder="Paste your resume plain text or upload a PDF/DOCX file..."></textarea>
+
+        <!-- Drag & Drop Zone / Status Indicator -->
+        <div id="resumeDropzone" class="dropzone-box rounded-lg p-3 text-center cursor-pointer" onclick="document.getElementById('resumeFile').click()">
+          <div class="flex items-center justify-center gap-2 text-xs text-zinc-400">
+            <i data-lucide="file-up" class="w-4 h-4 text-blue-400"></i>
+            <span>Drop PDF, DOCX, or TXT here, or click to upload</span>
+          </div>
+          <div id="resumeFileStatus" class="text-xs font-mono text-emerald-400 mt-1 hidden"></div>
+        </div>
+
+        <div class="space-y-1.5">
+          <div class="flex items-center justify-between text-[11px] text-zinc-400">
+            <span>Resume Content (Plain Text)</span>
+            <span id="resumeCharCount" class="font-mono">0 chars</span>
+          </div>
+          <textarea id="resumeText" rows="10" class="w-full bg-zinc-950/80 border border-zinc-800/80 rounded-lg p-3 text-xs text-zinc-200 placeholder-zinc-500 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 font-mono transition resize-none leading-relaxed" placeholder="Paste resume plain text here, or upload your document above..." oninput="updateCharCount('resumeText', 'resumeCharCount')"></textarea>
+        </div>
       </div>
 
-      <!-- Job Description Card -->
-      <div class="bg-slate-950/60 border border-slate-800 rounded-2xl p-6 flex flex-col space-y-4 relative overflow-hidden group hover:border-slate-700 transition">
+      <!-- Job Description Workbench Card -->
+      <div class="surface-card rounded-xl p-5 flex flex-col space-y-4">
         <div class="flex items-center justify-between">
           <div class="flex items-center space-x-2">
-            <div class="p-2 rounded-lg bg-purple-500/10 text-purple-400 border border-purple-500/20">
-              <i data-lucide="briefcase" class="w-5 h-5"></i>
-            </div>
-            <h2 class="font-semibold text-white">2. Job Description (JD)</h2>
+            <span class="w-5 h-5 rounded bg-zinc-800 border border-zinc-700 text-zinc-300 text-[11px] font-bold flex items-center justify-center font-mono">2</span>
+            <h2 class="text-sm font-semibold text-white">Target Job Description (JD)</h2>
           </div>
-          <label class="text-xs text-purple-400 hover:text-purple-300 cursor-pointer flex items-center gap-1 font-medium bg-purple-500/10 hover:bg-purple-500/20 px-2.5 py-1.5 rounded-lg border border-purple-500/20 transition">
-            <i data-lucide="upload" class="w-3.5 h-3.5"></i> Upload PDF / DOCX
+          <label class="text-xs text-zinc-300 hover:text-white cursor-pointer flex items-center gap-1.5 font-medium bg-zinc-800/80 hover:bg-zinc-700/80 px-2.5 py-1.5 rounded-lg border border-zinc-700/80 transition shadow-sm">
+            <i data-lucide="upload" class="w-3.5 h-3.5 text-zinc-400"></i>
+            <span>Upload Document</span>
             <input type="file" id="jdFile" accept=".pdf,.docx,.txt" class="hidden" onchange="handleFileUpload(event, 'jdText', 'jdFileStatus')">
           </label>
         </div>
-        <div id="jdFileStatus" class="text-xs text-slate-400 hidden"></div>
-        <textarea id="jdText" rows="11" class="w-full bg-slate-900 border border-slate-800 rounded-xl p-3.5 text-xs sm:text-sm text-slate-200 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-purple-500 font-mono transition resize-none" placeholder="Paste target Job Description text or upload file..."></textarea>
+
+        <!-- Drag & Drop Zone / Status Indicator -->
+        <div id="jdDropzone" class="dropzone-box rounded-lg p-3 text-center cursor-pointer" onclick="document.getElementById('jdFile').click()">
+          <div class="flex items-center justify-center gap-2 text-xs text-zinc-400">
+            <i data-lucide="file-text" class="w-4 h-4 text-purple-400"></i>
+            <span>Drop JD file here, or click to upload</span>
+          </div>
+          <div id="jdFileStatus" class="text-xs font-mono text-emerald-400 mt-1 hidden"></div>
+        </div>
+
+        <div class="space-y-1.5">
+          <div class="flex items-center justify-between text-[11px] text-zinc-400">
+            <span>Job Description Content (Plain Text)</span>
+            <span id="jdCharCount" class="font-mono">0 chars</span>
+          </div>
+          <textarea id="jdText" rows="10" class="w-full bg-zinc-950/80 border border-zinc-800/80 rounded-lg p-3 text-xs text-zinc-200 placeholder-zinc-500 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 font-mono transition resize-none leading-relaxed" placeholder="Paste target job description plain text here, or upload document above..." oninput="updateCharCount('jdText', 'jdCharCount')"></textarea>
+        </div>
       </div>
 
     </div>
 
-    <!-- Single Main Action: Start Interview -->
-    <div class="flex flex-col items-center justify-center gap-3 py-2" id="actionSection">
-      <button onclick="startInterviewFlow()" id="startInterviewBtn" class="flex items-center gap-2.5 bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white font-semibold text-base px-10 py-4 rounded-2xl shadow-xl shadow-indigo-500/25 transition transform active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed">
-        <i data-lucide="play" class="w-5 h-5 fill-white"></i>
-        <span>Start Interview</span>
+    <!-- Main Action Bar -->
+    <div class="flex flex-col items-center justify-center gap-3 pt-2" id="actionSection">
+      <button onclick="startInterviewFlow()" id="startInterviewBtn" class="flex items-center gap-2 bg-blue-600 hover:bg-blue-500 text-white font-semibold text-sm px-8 py-3.5 rounded-xl shadow-lg shadow-blue-600/20 transition transform active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed">
+        <i data-lucide="play" class="w-4 h-4 fill-white"></i>
+        <span>Start Mock Interview</span>
       </button>
-      <span class="text-xs text-slate-500">AI automatically calculates skill match score and launches customized questions</span>
+      <div class="flex items-center gap-2 text-xs text-zinc-400">
+        <span>Evaluates skills against JD requirements and launches adaptive questions</span>
+        <span class="text-zinc-600">•</span>
+        <span class="font-mono text-[11px] text-zinc-400 bg-zinc-900 px-1.5 py-0.5 rounded border border-zinc-800">Ctrl + Enter</span>
+      </div>
     </div>
 
-    <!-- Loading Spinner -->
-    <div id="loadingIndicator" class="hidden flex flex-col items-center justify-center py-16 space-y-4">
-      <div class="w-12 h-12 border-4 border-indigo-500/20 border-t-indigo-500 rounded-full animate-spin"></div>
-      <p id="loadingMessage" class="text-sm font-medium text-slate-400 animate-pulse">Analyzing resume & launching interview...</p>
+    <!-- High-Precision Loading Indicator -->
+    <div id="loadingIndicator" class="hidden flex flex-col items-center justify-center py-20 space-y-4">
+      <div class="w-10 h-10 border-2 border-blue-500/20 border-t-blue-500 rounded-full animate-spin"></div>
+      <p id="loadingMessage" class="text-xs font-mono text-zinc-400 tracking-wide">Analyzing candidate profile & generating questions...</p>
     </div>
 
-    <!-- Step 2: Interactive Interview Session -->
+    <!-- Step 2: Interactive Interview Session View -->
     <div id="interviewSection" class="hidden space-y-6">
       
-      <!-- Top Overview & Match Score Bar -->
-      <div class="bg-slate-950/80 border border-slate-800 rounded-2xl p-4 sm:p-5 space-y-4">
+      <!-- Top Session Dashboard Bar -->
+      <div class="surface-card rounded-xl p-4 sm:p-5 space-y-4">
         
-        <div class="flex flex-wrap items-center justify-between gap-3">
+        <div class="flex flex-wrap items-center justify-between gap-4">
           
-          <!-- Back Button & Question Count -->
+          <!-- Back Button, Progress & Topic -->
           <div class="flex items-center gap-3">
-            <button onclick="backToDashboard()" class="flex items-center gap-1.5 text-xs font-semibold px-3 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-800 hover:border-slate-700 text-slate-300 hover:text-white transition">
-              <i data-lucide="arrow-left" class="w-4 h-4 text-indigo-400"></i>
-              <span>← Edit Resume & JD</span>
+            <button onclick="backToDashboard()" class="flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 hover:border-zinc-700 text-zinc-300 hover:text-white transition">
+              <i data-lucide="arrow-left" class="w-3.5 h-3.5 text-zinc-400"></i>
+              <span>Edit Inputs</span>
             </button>
-            <div class="w-8 h-8 rounded-lg bg-indigo-500/20 text-indigo-400 flex items-center justify-center font-bold text-sm">
-              <span id="questionCounter">1/5</span>
+            <div class="h-4 w-[1px] bg-zinc-800"></div>
+            <div class="flex items-center gap-2">
+              <span class="text-xs font-semibold text-white">Question</span>
+              <span id="questionCounter" class="text-xs font-mono font-bold px-2 py-0.5 rounded bg-zinc-800 text-blue-400 border border-zinc-700/60">1/5</span>
             </div>
-            <div id="questionCategoryBadge" class="text-xs font-semibold px-2.5 py-1 rounded bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 hidden sm:inline-block">
-              Skill Gap Deep-Dive
+            <div id="questionCategoryBadge" class="text-xs font-medium px-2.5 py-0.5 rounded bg-zinc-900 text-zinc-300 border border-zinc-800 hidden sm:inline-block">
+              Technical Assessment
             </div>
           </div>
 
-          <!-- Match Score & Skills Expand Toggle -->
+          <!-- Match Score & Skills Drawer Toggle -->
           <div class="flex items-center gap-3">
-            <div class="flex items-center gap-2 bg-indigo-950/50 border border-indigo-500/30 px-3.5 py-1.5 rounded-xl">
-              <i data-lucide="gauge" class="w-4 h-4 text-indigo-400"></i>
-              <span class="text-xs text-slate-400">Match Score:</span>
-              <span id="fitScoreDisplay" class="text-sm font-black text-indigo-400">0%</span>
+            <!-- Timer Display -->
+            <div class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-zinc-900/90 border border-zinc-800 text-xs text-zinc-300 font-mono">
+              <i data-lucide="clock" class="w-3.5 h-3.5 text-zinc-400"></i>
+              <span id="questionTimer">00:00</span>
             </div>
 
-            <button onclick="toggleSkillsDrawer()" id="skillsToggleBtn" class="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-300 hover:text-white transition">
-              <i data-lucide="layers" class="w-3.5 h-3.5 text-emerald-400"></i>
-              <span>Matched & Gap Skills</span>
-              <i data-lucide="chevron-down" id="skillsChevron" class="w-3.5 h-3.5 text-slate-400 transition-transform"></i>
+            <!-- Match Score -->
+            <div class="flex items-center gap-2 bg-blue-950/30 border border-blue-500/20 px-3 py-1.5 rounded-lg">
+              <span class="text-xs text-zinc-400">Fit Score:</span>
+              <span id="fitScoreDisplay" class="text-xs font-mono font-bold text-blue-400">0%</span>
+            </div>
+
+            <!-- Skills Toggle -->
+            <button onclick="toggleSkillsDrawer()" id="skillsToggleBtn" class="flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-zinc-300 hover:text-white transition">
+              <i data-lucide="layers" class="w-3.5 h-3.5 text-zinc-400"></i>
+              <span>Skill Matrix</span>
+              <i data-lucide="chevron-down" id="skillsChevron" class="w-3.5 h-3.5 text-zinc-400 transition-transform"></i>
             </button>
           </div>
 
         </div>
 
-        <!-- Collapsible Skills Drawer (Default: Hidden, Opens on click) -->
-        <div id="skillsDrawer" class="hidden border-t border-slate-800/80 pt-4 space-y-3">
+        <!-- Progress Track Bar -->
+        <div class="w-full bg-zinc-900 h-1.5 rounded-full overflow-hidden">
+          <div id="progressBarFill" class="bg-blue-500 h-full w-[20%] transition-all duration-300"></div>
+        </div>
+
+        <!-- Collapsible Skills Drawer -->
+        <div id="skillsDrawer" class="hidden border-t border-zinc-800 pt-4 space-y-3">
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             
             <!-- Matched Skills -->
-            <div class="bg-emerald-950/20 border border-emerald-500/20 rounded-xl p-3.5 space-y-2">
+            <div class="bg-emerald-950/10 border border-emerald-500/20 rounded-lg p-3.5 space-y-2">
               <div class="text-xs font-bold text-emerald-400 flex items-center gap-1.5">
-                <i data-lucide="check-circle-2" class="w-4 h-4"></i>
-                <span>Matched Skills (Strengths)</span>
+                <i data-lucide="check" class="w-3.5 h-3.5"></i>
+                <span>Matched Strengths</span>
               </div>
               <div id="matchedSkillsList" class="flex flex-wrap gap-1.5 pt-1"></div>
             </div>
 
-            <!-- Gap Skills -->
-            <div class="bg-amber-950/20 border border-amber-500/20 rounded-xl p-3.5 space-y-2">
+            <!-- Skill Gaps -->
+            <div class="bg-amber-950/10 border border-amber-500/20 rounded-lg p-3.5 space-y-2">
               <div class="text-xs font-bold text-amber-400 flex items-center gap-1.5">
-                <i data-lucide="alert-triangle" class="w-4 h-4"></i>
-                <span>Skill Gaps Tested in Interview</span>
+                <i data-lucide="alert-circle" class="w-3.5 h-3.5"></i>
+                <span>Identified Skill Gaps</span>
               </div>
               <div id="missingSkillsList" class="flex flex-wrap gap-1.5 pt-1"></div>
             </div>
@@ -193,94 +250,112 @@
       </div>
 
       <!-- Question Card -->
-      <div class="bg-slate-950/80 border border-indigo-500/30 rounded-2xl p-6 sm:p-8 space-y-4 shadow-xl shadow-indigo-950/20">
-        <div class="flex items-start gap-3">
-          <div class="p-2 rounded-lg bg-indigo-500/20 text-indigo-300 shrink-0 mt-0.5">
-            <i data-lucide="message-square-code" class="w-5 h-5"></i>
+      <div class="surface-card rounded-xl p-6 sm:p-7 space-y-3">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <span class="text-[11px] font-mono uppercase tracking-wider text-blue-400 font-semibold">Technical Prompt</span>
+            <span id="targetSkillDisplay" class="text-[11px] font-mono text-zinc-400 bg-zinc-900 px-2 py-0.5 rounded border border-zinc-800">Target: Core Skill</span>
           </div>
-          <div>
-            <div class="flex items-center gap-2 mb-1">
-              <h3 class="text-xs font-semibold tracking-wider uppercase text-indigo-400">Interviewer Question</h3>
-              <span id="targetSkillDisplay" class="text-xs font-mono text-slate-400 bg-slate-900 px-2 py-0.5 rounded border border-slate-800">Target: Skill</span>
-              <span id="questionDifficultyBadge" class="text-[11px] font-semibold px-2 py-0.2 rounded bg-amber-500/10 text-amber-400 border border-amber-500/20">Medium</span>
-            </div>
-            <p id="currentQuestionText" class="text-base sm:text-lg text-white font-medium leading-relaxed"></p>
-          </div>
+          <span id="questionDifficultyBadge" class="text-[11px] font-mono font-medium px-2 py-0.5 rounded bg-zinc-800 text-zinc-300 border border-zinc-700">Medium</span>
         </div>
+        <p id="currentQuestionText" class="text-base sm:text-lg text-white font-medium leading-relaxed"></p>
       </div>
 
-      <!-- Answer Input Area -->
-      <div class="bg-slate-950/60 border border-slate-800 rounded-2xl p-6 space-y-4">
+      <!-- Candidate Answer Workspace -->
+      <div class="surface-card rounded-xl p-6 space-y-4">
         <div class="flex items-center justify-between">
-          <label class="text-sm font-semibold text-slate-300 flex items-center gap-2">
-            <i data-lucide="terminal" class="w-4 h-4 text-purple-400"></i> Your Answer
+          <label class="text-xs font-semibold text-zinc-300 uppercase tracking-wider flex items-center gap-1.5">
+            <i data-lucide="edit-3" class="w-3.5 h-3.5 text-blue-400"></i> Your Answer
           </label>
-          <span class="text-xs text-slate-500">Type as you would speak in an actual technical interview</span>
+          <div class="flex items-center gap-3">
+            <span id="answerWordCount" class="text-[11px] font-mono text-zinc-400">0 words</span>
+            <!-- Voice Speech-to-Text Button -->
+            <button onclick="toggleVoiceRecording()" id="voiceRecordBtn" title="Practice speaking your answer verbally" class="flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-md bg-zinc-800 hover:bg-zinc-700 text-zinc-300 border border-zinc-700/80 transition">
+              <i data-lucide="mic" class="w-3.5 h-3.5 text-rose-400"></i>
+              <span id="voiceRecordText">Voice Dictation</span>
+            </button>
+          </div>
         </div>
-        <textarea id="userAnswerInput" rows="6" class="w-full bg-slate-900 border border-slate-800 rounded-xl p-4 text-sm text-slate-200 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 font-mono transition resize-none" placeholder="Provide your technical explanation, architectural trade-offs, and examples..."></textarea>
+
+        <textarea id="userAnswerInput" rows="7" class="w-full bg-zinc-950/80 border border-zinc-800/80 rounded-lg p-3.5 text-sm text-zinc-200 placeholder-zinc-500 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 font-mono transition resize-none leading-relaxed" placeholder="Explain your architectural reasoning, key trade-offs, and technical implementation details..." oninput="updateAnswerWordCount()"></textarea>
         
-        <div class="flex items-center justify-end gap-3">
-          <button onclick="submitAnswerForEvaluation()" id="submitAnswerBtn" class="flex items-center gap-2 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white font-medium px-6 py-2.5 rounded-xl shadow-lg shadow-emerald-500/20 transition active:scale-95">
-            <i data-lucide="send" class="w-4 h-4"></i>
-            <span>Submit for AI Evaluation</span>
-          </button>
+        <div class="flex items-center justify-between pt-1">
+          <span class="text-[11px] text-zinc-400 hidden sm:inline-block">Tip: Structure your response with core definition, trade-offs, and production examples.</span>
+          <div class="flex items-center gap-2 ml-auto">
+            <button onclick="submitAnswerForEvaluation()" id="submitAnswerBtn" class="flex items-center gap-2 bg-blue-600 hover:bg-blue-500 text-white font-medium text-xs px-5 py-2.5 rounded-lg shadow-sm transition active:scale-95">
+              <i data-lucide="check-circle" class="w-3.5 h-3.5"></i>
+              <span>Evaluate Answer</span>
+            </button>
+          </div>
         </div>
       </div>
 
       <!-- Live Evaluation Result Card -->
-      <div id="liveEvaluationCard" class="hidden bg-slate-950/80 border border-slate-800 rounded-2xl p-6 sm:p-8 space-y-6 transition">
+      <div id="liveEvaluationCard" class="hidden surface-card rounded-xl p-6 sm:p-7 space-y-6">
         
-        <div class="flex flex-wrap items-center justify-between border-b border-slate-800 pb-5 gap-4">
+        <!-- Score Bar & Next Button -->
+        <div class="flex flex-wrap items-center justify-between border-b border-zinc-800 pb-5 gap-4">
           <div class="flex items-center gap-3">
-            <div id="evalScoreBox" class="w-14 h-14 rounded-2xl bg-indigo-500/10 border border-indigo-500/30 flex items-center justify-center text-xl font-black text-indigo-400">
+            <div id="evalScoreBox" class="w-12 h-12 rounded-xl bg-zinc-800 border border-zinc-700 flex items-center justify-center text-lg font-mono font-bold text-white">
               8.5
             </div>
             <div>
-              <div class="text-xs text-slate-400 font-medium">Evaluation Score</div>
-              <div id="evalScoreLabel" class="text-base font-bold text-white">Solid Response</div>
+              <div class="text-[11px] text-zinc-400 uppercase tracking-wider font-semibold">Rubric Score</div>
+              <div id="evalScoreLabel" class="text-sm font-semibold text-white">Proficient Response</div>
             </div>
           </div>
-          <button onclick="nextQuestion()" id="nextQuestionBtn" class="flex items-center gap-2 bg-indigo-500 hover:bg-indigo-600 text-white font-medium px-5 py-2.5 rounded-xl transition active:scale-95">
+
+          <button onclick="nextQuestion()" id="nextQuestionBtn" class="flex items-center gap-2 bg-blue-600 hover:bg-blue-500 text-white text-xs font-medium px-4 py-2.5 rounded-lg transition active:scale-95 shadow-sm">
             <span>Next Question</span>
-            <i data-lucide="arrow-right" class="w-4 h-4"></i>
+            <i data-lucide="arrow-right" class="w-3.5 h-3.5"></i>
           </button>
         </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div class="space-y-3 bg-emerald-950/20 border border-emerald-500/20 rounded-xl p-4">
+        <!-- Strengths vs Missing Points Grid -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div class="space-y-2 bg-emerald-950/10 border border-emerald-500/20 rounded-lg p-4">
             <h4 class="text-xs font-bold uppercase tracking-wider text-emerald-400 flex items-center gap-1.5">
-              <i data-lucide="check-circle-2" class="w-4 h-4"></i> What You Did Well
+              <i data-lucide="check-circle" class="w-3.5 h-3.5"></i> Demonstrations of Strength
             </h4>
-            <ul id="evalStrengthsList" class="text-xs sm:text-sm text-slate-300 space-y-1.5 list-disc list-inside"></ul>
+            <ul id="evalStrengthsList" class="text-xs text-zinc-300 space-y-1.5 list-disc list-inside leading-relaxed"></ul>
           </div>
 
-          <div class="space-y-3 bg-amber-950/20 border border-amber-500/20 rounded-xl p-4">
+          <div class="space-y-2 bg-amber-950/10 border border-amber-500/20 rounded-lg p-4">
             <h4 class="text-xs font-bold uppercase tracking-wider text-amber-400 flex items-center gap-1.5">
-              <i data-lucide="alert-circle" class="w-4 h-4"></i> Missing Concepts / Areas to Improve
+              <i data-lucide="alert-triangle" class="w-3.5 h-3.5"></i> Missing Technical Depth
             </h4>
-            <ul id="evalGapsList" class="text-xs sm:text-sm text-slate-300 space-y-1.5 list-disc list-inside"></ul>
+            <ul id="evalGapsList" class="text-xs text-zinc-300 space-y-1.5 list-disc list-inside leading-relaxed"></ul>
           </div>
         </div>
 
-        <div class="space-y-2 bg-slate-900/60 rounded-xl p-4 border border-slate-800/80">
-          <h4 class="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
-            <i data-lucide="message-square" class="w-4 h-4 text-indigo-400"></i> Evaluator Feedback
+        <!-- Detailed Feedback -->
+        <div class="space-y-1.5 bg-zinc-900/50 rounded-lg p-4 border border-zinc-800">
+          <h4 class="text-xs font-bold uppercase tracking-wider text-zinc-400 flex items-center gap-1.5">
+            <i data-lucide="message-square" class="w-3.5 h-3.5 text-blue-400"></i> Detailed Assessment
           </h4>
-          <p id="evalDetailedFeedback" class="text-xs sm:text-sm text-slate-300 leading-relaxed"></p>
+          <p id="evalDetailedFeedback" class="text-xs text-zinc-300 leading-relaxed"></p>
         </div>
 
-        <div class="space-y-2 bg-indigo-950/30 border border-indigo-500/20 rounded-xl p-4">
-          <h4 class="text-xs font-bold uppercase tracking-wider text-indigo-300 flex items-center gap-1.5">
-            <i data-lucide="award" class="w-4 h-4 text-indigo-400"></i> Staff Engineer Benchmark Answer
-          </h4>
-          <p id="evalModelAnswer" class="text-xs sm:text-sm text-indigo-100/90 font-mono leading-relaxed bg-indigo-950/50 p-3 rounded-lg border border-indigo-500/10"></p>
+        <!-- Benchmark Model Answer -->
+        <div class="space-y-2 bg-zinc-900/60 border border-zinc-800 rounded-lg p-4">
+          <div class="flex items-center justify-between">
+            <h4 class="text-xs font-bold uppercase tracking-wider text-zinc-300 flex items-center gap-1.5">
+              <i data-lucide="terminal" class="w-3.5 h-3.5 text-blue-400"></i> Staff Engineer Reference Answer
+            </h4>
+            <button onclick="copyModelAnswer()" id="copyModelBtn" class="text-[11px] font-medium text-zinc-400 hover:text-zinc-200 flex items-center gap-1">
+              <i data-lucide="copy" class="w-3 h-3"></i>
+              <span id="copyBtnText">Copy Answer</span>
+            </button>
+          </div>
+          <p id="evalModelAnswer" class="text-xs text-zinc-200 font-mono leading-relaxed bg-zinc-950/80 p-3 rounded-md border border-zinc-800/80 whitespace-pre-wrap"></p>
         </div>
 
-        <div class="space-y-2 bg-slate-900/60 rounded-xl p-4 border border-slate-800/80">
-          <h4 class="text-xs font-bold uppercase tracking-wider text-purple-400 flex items-center gap-1.5">
-            <i data-lucide="lightbulb" class="w-4 h-4"></i> Interview Communication Tips
+        <!-- Communication & Delivery Tips -->
+        <div class="space-y-1.5 bg-zinc-900/40 rounded-lg p-4 border border-zinc-800">
+          <h4 class="text-xs font-bold uppercase tracking-wider text-zinc-400 flex items-center gap-1.5">
+            <i data-lucide="lightbulb" class="w-3.5 h-3.5 text-amber-400"></i> Interview Delivery Tips
           </h4>
-          <ul id="evalTipsList" class="text-xs sm:text-sm text-slate-300 space-y-1 list-disc list-inside"></ul>
+          <ul id="evalTipsList" class="text-xs text-zinc-300 space-y-1 list-disc list-inside leading-relaxed"></ul>
         </div>
 
       </div>
@@ -288,42 +363,44 @@
     </div>
 
     <!-- Final Summary Section -->
-    <div id="finalSummarySection" class="hidden bg-slate-950/80 border border-slate-800 rounded-2xl p-8 space-y-6 text-center">
-      <div class="w-16 h-16 rounded-full bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center text-emerald-400 mx-auto">
-        <i data-lucide="award" class="w-8 h-8"></i>
+    <div id="finalSummarySection" class="hidden surface-card rounded-xl p-8 sm:p-10 space-y-6 text-center max-w-2xl mx-auto">
+      <div class="w-12 h-12 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400 mx-auto">
+        <i data-lucide="award" class="w-6 h-6"></i>
       </div>
-      <h2 class="text-2xl font-bold text-white">Interview Session Completed!</h2>
-      <p class="text-slate-400 max-w-md mx-auto text-sm">
-        All questions evaluated and saved to your history. You can review your scores and benchmark answers anytime.
-      </p>
-      <div class="flex justify-center gap-4 pt-4">
-        <button onclick="backToDashboard()" class="bg-indigo-500 hover:bg-indigo-600 text-white font-medium px-6 py-2.5 rounded-xl transition">
-          View Resume & JD
+      <div class="space-y-2">
+        <h2 class="text-xl font-bold text-white">Mock Interview Round Complete</h2>
+        <p class="text-zinc-400 text-xs sm:text-sm leading-relaxed">
+          All technical questions evaluated and saved to your history database. You can review your scorecard, analysis, and benchmark answers anytime.
+        </p>
+      </div>
+      <div class="flex justify-center gap-3 pt-2">
+        <button onclick="backToDashboard()" class="bg-zinc-800 hover:bg-zinc-700 text-zinc-200 text-xs font-medium px-4 py-2.5 rounded-lg border border-zinc-700 transition">
+          Review Inputs
         </button>
-        <button onclick="createNewSession()" class="bg-slate-800 hover:bg-slate-700 text-slate-300 font-medium px-6 py-2.5 rounded-xl transition">
-          Start Fresh Session
+        <button onclick="createNewSession()" class="bg-blue-600 hover:bg-blue-500 text-white text-xs font-medium px-5 py-2.5 rounded-lg transition">
+          Start Next Session
         </button>
       </div>
     </div>
 
   </main>
 
-  <!-- History Slide-over Modal -->
-  <div id="historyModal" class="hidden fixed inset-0 z-50 overflow-hidden bg-slate-950/70 backdrop-blur-sm flex justify-end">
-    <div class="w-full max-w-md bg-slate-900 border-l border-slate-800 h-full p-6 flex flex-col space-y-6 shadow-2xl">
-      <div class="flex items-center justify-between border-b border-slate-800 pb-4">
+  <!-- History Slide-over Drawer -->
+  <div id="historyModal" class="hidden fixed inset-0 z-50 overflow-hidden bg-black/60 backdrop-blur-sm flex justify-end" onclick="closeHistoryModalOnBackdrop(event)">
+    <div class="w-full max-w-md bg-[#0f131c] border-l border-zinc-800 h-full p-6 flex flex-col space-y-5 shadow-2xl">
+      <div class="flex items-center justify-between border-b border-zinc-800 pb-4">
         <div class="flex items-center gap-2">
-          <i data-lucide="history" class="w-5 h-5 text-indigo-400"></i>
-          <h2 class="font-bold text-lg text-white">Past Interview Sessions</h2>
+          <i data-lucide="history" class="w-4 h-4 text-blue-400"></i>
+          <h2 class="font-bold text-sm text-white">Interview Sessions History</h2>
         </div>
-        <button onclick="closeHistoryModal()" class="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800">
-          <i data-lucide="x" class="w-5 h-5"></i>
+        <button onclick="closeHistoryModal()" class="text-zinc-400 hover:text-white p-1 rounded-md hover:bg-zinc-800">
+          <i data-lucide="x" class="w-4 h-4"></i>
         </button>
       </div>
 
       <!-- History List -->
       <div id="historyListContainer" class="flex-1 overflow-y-auto space-y-3 pr-1">
-        <div class="text-center py-8 text-slate-500 text-sm">No saved sessions yet.</div>
+        <div class="text-center py-8 text-zinc-500 text-xs">No saved sessions yet.</div>
       </div>
     </div>
   </div>
