@@ -19,11 +19,12 @@ config/*.env
 !config/*.env.example
 !.env.example
 
-# Databases & SQLite
+# Databases, SQLite & Vector Store Storage
 *.db
 *.sqlite
 *.sqlite3
-data/*.db
+data/
+chroma/
 
 # PyCharm / IDEs / Editors
 .idea/

@@ -1,6 +1,6 @@
 """
 Views and API Request Handlers for AI Interview Copilot
-Handles all incoming web requests, document processing, database persistence, and AI endpoints.
+Handles all incoming web requests, document processing, database persistence, RAG vector indexing, and AI endpoints.
 """
 from fastapi import APIRouter, Depends, File, HTTPException, Request, UploadFile, status
 from fastapi.responses import HTMLResponse
@@ -25,6 +25,8 @@ from ai_apps.src.parser import document_parser
 from ai_apps.src.analyzer import skill_gap_analyzer
 from ai_apps.src.evaluator import answer_evaluator
 from ai_apps.src.session_service import session_service
+from ai_apps.src.rag_service import rag_service
+from ai_apps.src.vector_store import vector_store
 from ai_apps.core.exceptions import DocumentParsingError, LLMInferenceError
 
 # Project root templates directory
@@ -70,6 +72,9 @@ async def health_view():
         "use_open_source": settings.USE_OPEN_SOURCE,
         "provider": "Local Open Source" if settings.USE_OPEN_SOURCE else "Google Gemini (Cloud)",
         "gemini_api_key_configured": bool(settings.GEMINI_API_KEY),
+        "use_local_embeddings": settings.is_local_embed,
+        "embedding_model": settings.LOCAL_EMBEDDING_MODEL if settings.is_local_embed else settings.GEMINI_EMBEDDING_MODEL,
+        "rag_vector_engine": "ChromaDB + Cosine Search",
     }
 
 
@@ -105,12 +110,16 @@ async def parse_document_view(file: UploadFile = File(...)):
 
 
 # ==========================================
-# Unified 1-Click Start Interview (Analysis + Questions in One Flow)
+# Unified 1-Click Start Interview (RAG Vector Indexing + Analysis + Grounded Questions)
 # ==========================================
 @router.post("/api/v1/start-interview", response_model=StartInterviewResponse, tags=["AI Interview"])
 async def start_interview_view(request: StartInterviewRequest, db: Session = Depends(get_db)):
     """
-    1-Click Start: Analyzes resume vs JD, matches skills, generates targeted questions, and saves session.
+    1-Click Start:
+    1. Analyzes resume vs JD for skill gaps and fit score.
+    2. Saves session to SQLite.
+    3. Indexes resume & JD chunks into RAG Vector Store (Cloud or Local embeddings).
+    4. Generates questions grounded in candidate resume projects and JD requirements.
     """
     try:
         # Step 1: Analyze Skills & Fit
@@ -119,15 +128,7 @@ async def start_interview_view(request: StartInterviewRequest, db: Session = Dep
             jd_text=request.job_description_text,
         )
 
-        # Step 2: Generate Gap-Targeted Questions
-        questions_result = skill_gap_analyzer.generate_interview_questions(
-            resume_text=request.resume_text,
-            jd_text=request.job_description_text,
-            missing_skills=analysis_result.missing_skills,
-            num_questions=5,
-        )
-
-        # Step 3: Save Complete Session to SQLite Database
+        # Step 2: Save Initial Session to SQLite Database to obtain Session ID
         saved_session = session_service.save_analysis(
             db=db,
             resume_text=request.resume_text,
@@ -136,6 +137,26 @@ async def start_interview_view(request: StartInterviewRequest, db: Session = Dep
             session_id=request.session_id,
         )
 
+        # Step 3: RAG Document Chunking & Vector Indexing
+        try:
+            rag_service.index_session(
+                session_id=saved_session.id,
+                resume_text=request.resume_text,
+                job_description_text=request.job_description_text
+            )
+        except Exception as rag_err:
+            logger.warning(f"RAG vector indexing encountered non-fatal error: {rag_err}")
+
+        # Step 4: Generate RAG Grounded Questions
+        questions_result = skill_gap_analyzer.generate_interview_questions(
+            resume_text=request.resume_text,
+            jd_text=request.job_description_text,
+            missing_skills=analysis_result.missing_skills,
+            num_questions=5,
+            session_id=saved_session.id,
+        )
+
+        # Step 5: Save Questions to DB
         session_service.save_questions(
             db=db,
             session_id=saved_session.id,
@@ -167,7 +188,7 @@ async def start_interview_view(request: StartInterviewRequest, db: Session = Dep
 @router.post("/api/v1/analyze", response_model=AnalysisResponse, tags=["AI Analysis"])
 async def analyze_skills_view(request: AnalysisRequest, db: Session = Depends(get_db)):
     """
-    Performs skill gap analysis comparing candidate's resume with JD and saves to Database.
+    Performs skill gap analysis comparing candidate's resume with JD, indexes vectors, and saves to Database.
     """
     try:
         analysis_result = skill_gap_analyzer.analyze_resume_and_jd(
@@ -182,6 +203,17 @@ async def analyze_skills_view(request: AnalysisRequest, db: Session = Depends(ge
             analysis=analysis_result,
             session_id=request.session_id,
         )
+        
+        # Index chunks for RAG
+        try:
+            rag_service.index_session(
+                session_id=saved_session.id,
+                resume_text=request.resume_text,
+                job_description_text=request.job_description_text
+            )
+        except Exception as e:
+            logger.warning(f"RAG indexing warning: {e}")
+
         analysis_result.session_id = saved_session.id
         return analysis_result
 
@@ -198,7 +230,7 @@ async def analyze_skills_view(request: AnalysisRequest, db: Session = Depends(ge
 @router.post("/api/v1/generate-questions", response_model=QuestionGenerationResponse, tags=["AI Questions"])
 async def generate_questions_view(request: QuestionGenerationRequest, db: Session = Depends(get_db)):
     """
-    Generates tailored interview questions and links them to the active session in DB.
+    Generates RAG-grounded interview questions and links them to the active session in DB.
     """
     try:
         questions_result = skill_gap_analyzer.generate_interview_questions(
@@ -206,6 +238,7 @@ async def generate_questions_view(request: QuestionGenerationRequest, db: Sessio
             jd_text=request.job_description_text,
             missing_skills=request.missing_skills,
             num_questions=request.num_questions,
+            session_id=request.session_id,
         )
 
         if request.session_id:
@@ -231,7 +264,7 @@ async def generate_questions_view(request: QuestionGenerationRequest, db: Sessio
 @router.post("/api/v1/evaluate-answer", response_model=EvaluationResponse, tags=["AI Evaluation"])
 async def evaluate_answer_view(request: EvaluationRequest, db: Session = Depends(get_db)):
     """
-    Evaluates candidate's typed response with 1-10 scoring and persists evaluation into DB.
+    Evaluates candidate's response with RAG grounding and persists evaluation into DB.
     """
     try:
         eval_result = answer_evaluator.evaluate_candidate_answer(
@@ -239,6 +272,7 @@ async def evaluate_answer_view(request: EvaluationRequest, db: Session = Depends
             evaluation_criteria=request.evaluation_criteria,
             user_answer=request.user_answer,
             target_skill=request.target_skill_or_topic or "",
+            session_id=request.session_id,
         )
 
         if request.session_id:
@@ -286,9 +320,16 @@ async def get_session_detail_view(session_id: int, db: Session = Depends(get_db)
 @router.delete("/api/v1/sessions/{session_id}", tags=["Session History"])
 async def delete_session_view(session_id: int, db: Session = Depends(get_db)):
     """
-    Deletes a session from history.
+    Deletes a session from history and cleans up stored vectors in ChromaDB.
     """
     success = session_service.delete_session(db=db, session_id=session_id)
     if not success:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Session not found")
+    
+    # Clean up vector database collections
+    try:
+        vector_store.delete_session(session_id)
+    except Exception as e:
+        logger.warning(f"Vector deletion warning: {e}")
+
     return {"success": True, "message": f"Session {session_id} deleted."}

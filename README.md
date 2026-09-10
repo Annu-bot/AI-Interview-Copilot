@@ -1,20 +1,21 @@
 # AI Interview Copilot
 
-An AI-assisted technical interview preparation system designed for software engineers and technical candidates. It analyzes resumes against target job descriptions, identifies skill gaps, generates targeted interview questions, and evaluates responses against staff-level engineering rubrics.
+An AI-assisted technical interview preparation system designed for software engineers and technical candidates. It performs semantic chunking, vector embedding, and RAG retrieval across resumes and target job descriptions to identify skill gaps, generate grounded interview questions, and evaluate responses against staff-level engineering rubrics.
 
 ## Key Features
 
-- Resume and Job Description Analysis: Parses PDF, DOCX, and text resumes to extract key competencies and match them against target job descriptions.
-- Skill Gap Detection: Pinpoints missing prerequisites, weak areas, and strength alignments.
-- Adaptive Question Generation: Generates scenario-based technical questions focused directly on identified skill gaps.
+- Document Ingestion and Chunking: Parses PDF, DOCX, and text resumes/JDs and performs section-aware semantic chunking.
+- Dual-Engine Vector Embeddings (RAG): Generates dense embeddings using Google Gemini (Cloud API default) or local embedding models (Ollama/SentenceTransformers) via the `LOCAL_EMBED` flag.
+- Persistent Vector Store: Indexes resume evidence and job requirements into ChromaDB with cosine similarity retrieval.
+- Grounded Question Generation: Generates scenario-based technical questions directly grounded in candidate project claims and target company requirements.
 - Rubric-Based Response Evaluation: Evaluates user responses on conceptual depth, system design trade-offs, and practical execution, accompanied by reference answers.
 - Session History: Persists interview rounds, question logs, and evaluations in a local SQLite database for progress tracking.
 
 ## Tech Stack
 
 - Backend: FastAPI, Pydantic v2, SQLAlchemy, Uvicorn
-- AI / LLM: Google Gemini API (with support for local Ollama models)
-- Frontend: Vanilla JavaScript, CSS3, HTML5 (Jinja2 templates)
+- AI & Embeddings: Google Gemini API, ChromaDB, NumPy (with local Ollama embedding routing)
+- Frontend: Vanilla JavaScript, CSS3, Tailwind CSS, Lucide icons, HTML5 (Jinja2 templates)
 - Document Processing: PyPDF, python-docx
 - Testing: Pytest
 
@@ -24,16 +25,16 @@ An AI-assisted technical interview preparation system designed for software engi
 AI-Interview-Copilot/
 ├── ai_apps/
 │   ├── core/               # Database models, constants, and custom exceptions
-│   ├── src/                # LLM client, document parser, analyzer, and evaluator
+│   ├── src/                # Chunker, embedding client, vector store, RAG service, analyzer, and evaluator
 │   ├── views.py            # API routes and view controllers
 │   └── main.py             # FastAPI entrypoint and static file mounting
 ├── config/
 │   ├── settings.py         # Application settings loaded via Pydantic
 │   ├── local.env.example   # Example environment configuration for local dev
 │   └── deploy.env.example  # Example environment configuration for production
-├── static/                 # Stylesheets and client-side JavaScript
+├── static/                 # Stylesheets, design system, and client-side JavaScript
 ├── templates/              # HTML layout templates
-├── tests/                  # Unit and integration test suite
+├── tests/                  # Unit, embedding, and RAG integration test suite
 ├── deploy/                 # Dockerfile and docker-compose configurations
 ├── runserver.py            # Local development server startup script
 ├── requirements.txt        # Project dependencies
@@ -83,12 +84,19 @@ Copy-Item config\local.env.example config\local.env
 cp config/local.env.example config/local.env
 ```
 
-Open `config/local.env` and add your Google Gemini API key:
+Open `config/local.env` and configure your settings:
 
 ```env
 USE_OPEN_SOURCE=False
 GEMINI_API_KEY=your_actual_api_key_here
 GEMINI_MODEL=gemini-2.5-flash
+
+# RAG & Embedding Routing
+LOCAL_EMBED=False
+USE_LOCAL_EMBEDDINGS=False
+GEMINI_EMBEDDING_MODEL=models/text-embedding-004
+LOCAL_EMBEDDING_BASE_URL=http://localhost:11434
+LOCAL_EMBEDDING_MODEL=nomic-embed-text
 ```
 
 ### Running the Application
