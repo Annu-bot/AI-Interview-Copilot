@@ -1,0 +1,43 @@
+# Virtual Environments
+.venv/
+venv/
+env/
+ENV/
+
+# Python Cache & Bytecode
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# Environment Variables & Secrets (Keep secrets safe!)
+.env
+.env.*
+*.env
+config/*.env
+!config/*.env.example
+!.env.example
+
+# Databases & SQLite
+*.db
+*.sqlite
+*.sqlite3
+data/*.db
+
+# PyCharm / IDEs / Editors
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Testing & Coverage
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Logs & Temporary Uploads
+*.log
+logs/
+uploads/
+temp/

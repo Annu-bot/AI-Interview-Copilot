@@ -1,0 +1,15 @@
+version: '3.8'
+
+services:
+  ai-interview-copilot:
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile
+    container_name: ai_interview_copilot_app
+    ports:
+      - "8000:8000"
+    environment:
+      - ENV_MODE=deploy
+    env_file:
+      - ../config/deploy.env
+    restart: unless-stopped
