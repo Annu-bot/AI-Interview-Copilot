@@ -118,7 +118,3 @@ Execute the automated test suite:
 ```bash
 pytest
 ```
-
-## License
-
-MIT License.
