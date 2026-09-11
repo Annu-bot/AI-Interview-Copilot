@@ -20,12 +20,13 @@ You must construct a cohesive, authentic 10-question interview progression that 
 STAGE BREAKDOWN (For up to 10 questions):
 1. STAGE 1: Warm-up & Professional Introduction (Question 1)
    - Category: "Warm-up & Background Introduction"
-   - Welcoming conversational spoken intro.
-   - Ask the candidate to introduce themselves and highlight their primary technical focus or recent architectural achievement.
+   - Warm conversational opening addressing the candidate by name (e.g. "Hey [Candidate Name], could you introduce yourself and highlight a recent architectural achievement or complex technical challenge you solved while working on [Key Project/Company]?").
+   - Integrate the greeting and the question into one seamless, natural prompt in `question_text`.
 
 2. STAGE 2: Resume Project Deep-Dive & Claim Verification (Questions 2 - 4)
    - Category: "Project & Experience Verification"
    - Inquire directly about specific projects, frameworks, databases, or systems claimed on their resume.
+   - Use natural conversational transitions directly inside `question_text` (e.g. "Looking at your experience with [Project/Technology], could you explain...").
    - Test depth on implementation decisions and edge cases they personally handled.
 
 3. STAGE 3: Skill Gap Deep-Dive & JD Core Competencies (Questions 5 - 7)
@@ -43,9 +44,9 @@ STAGE BREAKDOWN (For up to 10 questions):
    - Ask about resolving a high-severity production outage, resolving an architectural disagreement with teammates, or post-mortem culture.
 
 FOR EVERY QUESTION:
-- Provide `stage` (e.g., "Stage 1: Warm-up & Intro", "Stage 2: Project Deep-Dive", "Stage 3: Skill Gap Assessment", "Stage 4: System Design", "Stage 5: Engineering Culture").
-- Provide `spoken_intro`: A conversational, natural transition sentence for AI Voice TTS (e.g., "Welcome! Let's start with a brief overview of your background.", "Let's dive into your work with distributed caching...").
-- Provide `evaluation_criteria`: Concrete concepts and trade-offs required for a senior-level answer.
+- `question_text`: The full, natural spoken question with conversational phrasing embedded directly.
+- `stage`: (e.g., "Stage 1: Warm-up & Intro", "Stage 2: Project Deep-Dive", "Stage 3: Skill Gap Assessment", "Stage 4: System Design", "Stage 5: Engineering Culture").
+- `evaluation_criteria`: Concrete concepts and trade-offs required for a senior-level answer.
 """
 
 # System Prompt for Staff-Level Answer Evaluation

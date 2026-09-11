@@ -91,15 +91,11 @@
             <span class="w-5 h-5 rounded bg-zinc-800 border border-zinc-700 text-zinc-300 text-[11px] font-bold flex items-center justify-center font-mono">1</span>
             <h2 class="text-sm font-semibold text-white">Candidate Resume</h2>
           </div>
-          <label class="text-xs text-zinc-300 hover:text-white cursor-pointer flex items-center gap-1.5 font-medium bg-zinc-800/80 hover:bg-zinc-700/80 px-2.5 py-1.5 rounded-lg border border-zinc-700/80 transition shadow-sm">
-            <i data-lucide="upload" class="w-3.5 h-3.5 text-zinc-400"></i>
-            <span>Upload Document</span>
-            <input type="file" id="resumeFile" accept=".pdf,.docx,.txt" class="hidden" onchange="handleFileUpload(event, 'resumeText', 'resumeFileStatus')">
-          </label>
         </div>
 
         <!-- Drag & Drop Zone -->
         <div id="resumeDropzone" class="dropzone-box rounded-lg p-3 text-center cursor-pointer" onclick="document.getElementById('resumeFile').click()">
+          <input type="file" id="resumeFile" accept=".pdf,.docx,.txt" class="hidden" onchange="handleFileUpload(event, 'resumeText', 'resumeFileStatus')">
           <div class="flex items-center justify-center gap-2 text-xs text-zinc-400">
             <i data-lucide="file-up" class="w-4 h-4 text-blue-400"></i>
             <span>Drop PDF, DOCX, or TXT here, or click to upload</span>
@@ -123,15 +119,11 @@
             <span class="w-5 h-5 rounded bg-zinc-800 border border-zinc-700 text-zinc-300 text-[11px] font-bold flex items-center justify-center font-mono">2</span>
             <h2 class="text-sm font-semibold text-white">Target Job Description (JD)</h2>
           </div>
-          <label class="text-xs text-zinc-300 hover:text-white cursor-pointer flex items-center gap-1.5 font-medium bg-zinc-800/80 hover:bg-zinc-700/80 px-2.5 py-1.5 rounded-lg border border-zinc-700/80 transition shadow-sm">
-            <i data-lucide="upload" class="w-3.5 h-3.5 text-zinc-400"></i>
-            <span>Upload Document</span>
-            <input type="file" id="jdFile" accept=".pdf,.docx,.txt" class="hidden" onchange="handleFileUpload(event, 'jdText', 'jdFileStatus')">
-          </label>
         </div>
 
         <!-- Drag & Drop Zone -->
         <div id="jdDropzone" class="dropzone-box rounded-lg p-3 text-center cursor-pointer" onclick="document.getElementById('jdFile').click()">
+          <input type="file" id="jdFile" accept=".pdf,.docx,.txt" class="hidden" onchange="handleFileUpload(event, 'jdText', 'jdFileStatus')">
           <div class="flex items-center justify-center gap-2 text-xs text-zinc-400">
             <i data-lucide="file-text" class="w-4 h-4 text-purple-400"></i>
             <span>Drop JD file here, or click to upload</span>
@@ -166,7 +158,7 @@
       <div class="flex items-center gap-3 w-full sm:w-auto">
         <button onclick="startInterviewFlow()" id="startInterviewBtn" class="w-full sm:w-auto flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-500 text-white font-semibold text-sm px-8 py-3 rounded-xl shadow-lg shadow-blue-600/20 transition transform active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed">
           <i data-lucide="play" class="w-4 h-4 fill-white"></i>
-          <span>Launch Voice Interview</span>
+          <span>Start Interview</span>
         </button>
       </div>
 
@@ -304,11 +296,6 @@
           </div>
         </div>
 
-        <!-- Conversational Spoken Intro Callout -->
-        <div id="spokenIntroContainer" class="hidden bg-blue-950/20 border-l-2 border-blue-500 p-3 rounded-r-lg">
-          <p id="spokenIntroText" class="text-xs text-blue-200/90 italic"></p>
-        </div>
-
         <!-- Main Question Text -->
         <div class="space-y-1 pt-1">
           <div class="text-[11px] font-mono uppercase tracking-wider text-zinc-400 font-semibold flex items-center justify-between">
@@ -332,17 +319,16 @@
           <div class="flex items-center gap-3">
             <span id="answerWordCount" class="text-[11px] font-mono text-zinc-400">0 words</span>
 
-            <!-- Voice Speech-to-Text Button -->
-            <button onclick="toggleVoiceRecording()" id="voiceRecordBtn" title="Speak your response aloud" class="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-200 border border-zinc-700 transition">
-              <i data-lucide="mic" id="voiceRecordIcon" class="w-3.5 h-3.5 text-rose-400"></i>
-              <span id="voiceRecordText">Dictate Voice (STT)</span>
+            <!-- Voice Speech-to-Text Button (Icon only) -->
+            <button onclick="toggleVoiceRecording()" id="voiceRecordBtn" title="Click to speak your response aloud" class="flex items-center justify-center p-2 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-200 border border-zinc-700 transition disabled:opacity-40 disabled:cursor-not-allowed">
+              <i data-lucide="mic" id="voiceRecordIcon" class="w-4 h-4 text-rose-400"></i>
             </button>
           </div>
         </div>
 
         <!-- Answer Textarea -->
         <div class="space-y-1">
-          <textarea id="userAnswerInput" rows="7" class="w-full bg-zinc-950/80 border border-zinc-800/80 rounded-lg p-3.5 text-sm text-zinc-200 placeholder-zinc-500 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 font-mono transition resize-none leading-relaxed" placeholder="Click 'Dictate Voice' to speak your answer, or type your explanation and architectural trade-offs..." oninput="updateAnswerWordCount()"></textarea>
+          <textarea id="userAnswerInput" rows="7" class="w-full bg-zinc-950/80 border border-zinc-800/80 rounded-lg p-3.5 text-sm text-zinc-200 placeholder-zinc-500 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 font-mono transition resize-none leading-relaxed" placeholder="Click the microphone icon above to speak, or type your response here..." oninput="updateAnswerWordCount()"></textarea>
           <div id="sttLiveFeedback" class="text-[11px] text-rose-400 font-mono hidden flex items-center gap-1.5 pt-1">
             <span class="w-2 h-2 rounded-full bg-rose-500 animate-pulse"></span>
             <span>Microphone active — speaking in real-time...</span>

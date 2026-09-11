@@ -74,8 +74,8 @@ Return the structured analysis strictly adhering to the specified schema.
 
 ### TASK:
 Generate exactly {num_questions} distinct, high-impact interview questions simulating a complete real-life technical interview loop:
-1. Question 1 (Warm-up): Welcoming intro asking the candidate to introduce their background and recent engineering achievements.
-2. Questions 2-{min(4, num_questions)} (Project Deep-Dive): Verify concrete resume projects, tools, and implementation decisions.
+1. Question 1 (Warm-up): Welcoming greeting addressing candidate by name embedded directly into the question (e.g. "Hey [Candidate], could you introduce yourself and highlight a recent architectural achievement or complex technical challenge you solved while working on [Project]?").
+2. Questions 2-{min(4, num_questions)} (Project Deep-Dive): Verify concrete resume projects, tools, and implementation decisions with natural transitions embedded.
 3. Questions {min(5, num_questions)}-{min(7, num_questions)} (Skill Gaps & Core JD): Probe directly on missing or weak competencies required by the JD.
 4. Questions {min(8, num_questions)}-{min(9, num_questions)} (System Design): Scalability, concurrency, failure modes, caching, and trade-offs.
 5. Question {num_questions} (Engineering Culture): Production outage handling, architectural trade-off disagreements, and candidate wrap-up.
@@ -86,8 +86,8 @@ For every question provide:
 - `category`: Question category enum
 - `target_skill_or_topic`: Target skill/area tested
 - `difficulty`: Easy / Medium / Hard
-- `spoken_intro`: A natural conversational sentence for AI Voice TTS before stating the question
-- `question_text`: The full technical question
+- `spoken_intro`: Optional short context (or empty string)
+- `question_text`: The full, naturally spoken conversational question prompt (including greeting for Question 1)
 - `evaluation_criteria`: Criteria for scoring
 
 Return the result strictly conforming to the QuestionGenerationResponse schema.

@@ -91,6 +91,20 @@ function getBestEnglishVoice() {
   return enVoice || synthVoices[0] || null;
 }
 
+// Helper to enable/disable Microphone based on AI speech state
+function setMicEnabled(enabled, tooltipMsg = "") {
+  const micBtn = document.getElementById("voiceRecordBtn");
+  if (!micBtn) return;
+  micBtn.disabled = !enabled;
+  if (!enabled) {
+    micBtn.classList.add("opacity-40", "cursor-not-allowed");
+    micBtn.setAttribute("title", tooltipMsg || "Microphone disabled while AI is speaking");
+  } else {
+    micBtn.classList.remove("opacity-40", "cursor-not-allowed");
+    micBtn.setAttribute("title", tooltipMsg || "Click to speak your response");
+  }
+}
+
 function toggleTtsSpeech() {
   if (isSpeakingTts) {
     stopTtsSpeech();
@@ -106,10 +120,9 @@ function speakCurrentQuestion() {
   if (!currentQuestions || currentQuestionIndex >= currentQuestions.length) return;
 
   const q = currentQuestions[currentQuestionIndex];
-  const intro = q.spoken_intro ? `${q.spoken_intro}. ` : "";
-  const textToSpeak = `${intro}${q.question_text || ""}`;
+  const textToSpeak = (q.question_text || "").trim();
 
-  if (!textToSpeak.trim()) return;
+  if (!textToSpeak) return;
 
   const utterance = new SpeechSynthesisUtterance(textToSpeak);
   const voice = getBestEnglishVoice();
@@ -121,17 +134,20 @@ function speakCurrentQuestion() {
   utterance.onstart = () => {
     isSpeakingTts = true;
     updateTtsUi(true);
+    setMicEnabled(false, "Microphone locked while AI is speaking...");
   };
 
   utterance.onend = () => {
     isSpeakingTts = false;
     updateTtsUi(false);
+    setMicEnabled(true);
   };
 
   utterance.onerror = (e) => {
     console.warn("TTS Error:", e);
     isSpeakingTts = false;
     updateTtsUi(false);
+    setMicEnabled(true);
   };
 
   window.speechSynthesis.speak(utterance);
@@ -143,6 +159,7 @@ function stopTtsSpeech() {
   }
   isSpeakingTts = false;
   updateTtsUi(false);
+  setMicEnabled(true);
 }
 
 function updateTtsUi(speaking) {
@@ -252,8 +269,6 @@ function startVoiceRecording() {
     isRecordingVoice = true;
     const btn = document.getElementById("voiceRecordBtn");
     if (btn) btn.classList.add("mic-recording");
-    const textEl = document.getElementById("voiceRecordText");
-    if (textEl) textEl.textContent = "Listening...";
     const feedback = document.getElementById("sttLiveFeedback");
     if (feedback) feedback.classList.remove("hidden");
   } catch (e) {
@@ -268,8 +283,6 @@ function stopVoiceRecording() {
   isRecordingVoice = false;
   const btn = document.getElementById("voiceRecordBtn");
   if (btn) btn.classList.remove("mic-recording");
-  const textEl = document.getElementById("voiceRecordText");
-  if (textEl) textEl.textContent = "Dictate Voice (STT)";
   const feedback = document.getElementById("sttLiveFeedback");
   if (feedback) feedback.classList.add("hidden");
 }
@@ -583,16 +596,6 @@ function loadCurrentQuestion() {
   document.getElementById("targetSkillDisplay").textContent = `Target: ${q.target_skill_or_topic || "Core Topic"}`;
   document.getElementById("currentQuestionText").textContent = q.question_text || "";
 
-  // Render Spoken Intro Callout
-  const spokenContainer = document.getElementById("spokenIntroContainer");
-  const spokenText = document.getElementById("spokenIntroText");
-  if (q.spoken_intro && q.spoken_intro.trim()) {
-    spokenText.textContent = `"${q.spoken_intro}"`;
-    spokenContainer.classList.remove("hidden");
-  } else {
-    spokenContainer.classList.add("hidden");
-  }
-
   // Progress Bar
   const progressPercent = Math.round(((currentQuestionIndex + 1) / currentQuestions.length) * 100);
   const progressBarFill = document.getElementById("progressBarFill");
@@ -608,6 +611,7 @@ function loadCurrentQuestion() {
     document.getElementById("userAnswerInput").value = existingEval.user_answer || existingEval.answer || "";
     document.getElementById("userAnswerInput").disabled = true;
     document.getElementById("submitAnswerBtn").disabled = true;
+    setMicEnabled(false, "Question already evaluated");
     updateAnswerWordCount();
     renderEvaluation(existingEval.evaluation || existingEval);
   } else {
@@ -619,9 +623,12 @@ function loadCurrentQuestion() {
 
     // Auto-Speak Question via TTS if enabled
     if (autoSpeakEnabled) {
+      setMicEnabled(false, "Microphone disabled while AI is speaking...");
       setTimeout(() => {
         speakCurrentQuestion();
       }, 400);
+    } else {
+      setMicEnabled(true);
     }
   }
 
@@ -640,6 +647,7 @@ async function submitAnswerForEvaluation() {
   stopTimer();
   stopTtsSpeech();
   stopVoiceRecording();
+  setMicEnabled(false);
 
   const q = currentQuestions[currentQuestionIndex];
 
@@ -675,6 +683,7 @@ async function submitAnswerForEvaluation() {
     renderEvaluation(evalData);
   } catch (err) {
     alert(`Evaluation failed: ${err.message}`);
+    setMicEnabled(true);
   } finally {
     showLoading(false);
   }
@@ -687,6 +696,7 @@ function renderEvaluation(evalData) {
 
   document.getElementById("userAnswerInput").disabled = true;
   document.getElementById("submitAnswerBtn").disabled = true;
+  setMicEnabled(false, "Question already evaluated");
 
   const score = evalData.score_out_of_10 || 0;
   const scoreBox = document.getElementById("evalScoreBox");
