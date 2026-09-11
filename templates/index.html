@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>AI Interview Copilot — Technical Interview Preparation</title>
+  <title>AI Interview Copilot — Real-Time Voice Technical Interviewer (V3)</title>
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
   <!-- Lucide Icons -->
@@ -19,11 +19,11 @@
       <!-- Brand Logo -->
       <div class="flex items-center space-x-3 cursor-pointer select-none" onclick="backToDashboard()">
         <div class="w-9 h-9 rounded-lg bg-blue-600/10 border border-blue-500/30 flex items-center justify-center shadow-sm">
-          <i data-lucide="terminal" class="w-4 h-4 text-blue-400"></i>
+          <i data-lucide="mic-2" class="w-4 h-4 text-blue-400"></i>
         </div>
         <div class="flex items-center gap-2">
           <span class="font-bold text-base tracking-tight text-white">Interview<span class="text-blue-400">Copilot</span></span>
-          <span class="text-[10px] uppercase font-bold tracking-widest px-2 py-0.5 rounded bg-zinc-800 text-zinc-300 border border-zinc-700/60">v1.0</span>
+          <span class="text-[10px] uppercase font-bold tracking-widest px-2 py-0.5 rounded bg-blue-500/20 text-blue-300 border border-blue-500/30">V3 Voice</span>
         </div>
       </div>
       
@@ -55,13 +55,13 @@
     <div id="heroSection" class="max-w-3xl space-y-2">
       <div class="inline-flex items-center gap-2 px-2.5 py-1 rounded-md bg-zinc-900 border border-zinc-800 text-[11px] font-medium text-zinc-400">
         <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
-        Staff-Level Technical Evaluation System
+        Interactive Voice Interviewer (TTS + STT + Grounded RAG)
       </div>
       <h1 class="text-2xl sm:text-3xl font-bold tracking-tight text-white">
-        Targeted Technical Interview Preparation
+        Adaptive Technical Voice Interview Copilot
       </h1>
       <p class="text-zinc-400 text-sm leading-relaxed">
-        Upload your candidate resume and target job description. The system maps your skills, pinpoints technical gaps, and runs an adaptive interview with real-time rubric scoring.
+        Upload your resume and target JD. The AI conducts a realistic 10-stage interview loop with voice speech synthesis (TTS), live speech recognition (STT), and grounded skill gap scoring.
       </p>
     </div>
 
@@ -98,7 +98,7 @@
           </label>
         </div>
 
-        <!-- Drag & Drop Zone / Status Indicator -->
+        <!-- Drag & Drop Zone -->
         <div id="resumeDropzone" class="dropzone-box rounded-lg p-3 text-center cursor-pointer" onclick="document.getElementById('resumeFile').click()">
           <div class="flex items-center justify-center gap-2 text-xs text-zinc-400">
             <i data-lucide="file-up" class="w-4 h-4 text-blue-400"></i>
@@ -130,7 +130,7 @@
           </label>
         </div>
 
-        <!-- Drag & Drop Zone / Status Indicator -->
+        <!-- Drag & Drop Zone -->
         <div id="jdDropzone" class="dropzone-box rounded-lg p-3 text-center cursor-pointer" onclick="document.getElementById('jdFile').click()">
           <div class="flex items-center justify-center gap-2 text-xs text-zinc-400">
             <i data-lucide="file-text" class="w-4 h-4 text-purple-400"></i>
@@ -150,26 +150,35 @@
 
     </div>
 
-    <!-- Main Action Bar -->
-    <div class="flex flex-col items-center justify-center gap-3 pt-2" id="actionSection">
-      <button onclick="startInterviewFlow()" id="startInterviewBtn" class="flex items-center gap-2 bg-blue-600 hover:bg-blue-500 text-white font-semibold text-sm px-8 py-3.5 rounded-xl shadow-lg shadow-blue-600/20 transition transform active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed">
-        <i data-lucide="play" class="w-4 h-4 fill-white"></i>
-        <span>Start Mock Interview</span>
-      </button>
-      <div class="flex items-center gap-2 text-xs text-zinc-400">
-        <span>Evaluates skills against JD requirements and launches adaptive questions</span>
-        <span class="text-zinc-600">•</span>
-        <span class="font-mono text-[11px] text-zinc-400 bg-zinc-900 px-1.5 py-0.5 rounded border border-zinc-800">Ctrl + Enter</span>
+    <!-- Interview Configuration & Launch Bar -->
+    <div class="surface-card rounded-xl p-5 flex flex-col sm:flex-row items-center justify-between gap-4" id="actionSection">
+      
+      <!-- Loop Length Selector -->
+      <div class="flex items-center gap-3">
+        <label for="questionCountSelect" class="text-xs font-semibold text-zinc-300">Interview Loop Length:</label>
+        <select id="questionCountSelect" class="bg-zinc-900 border border-zinc-700 text-xs text-white rounded-lg px-3 py-2 font-medium focus:outline-none focus:border-blue-500">
+          <option value="10" selected>10 Questions (Full Realistic Loop with Intro & System Design)</option>
+          <option value="5">5 Questions (Quick Skill Gap Assessment)</option>
+        </select>
       </div>
+
+      <!-- Start Button -->
+      <div class="flex items-center gap-3 w-full sm:w-auto">
+        <button onclick="startInterviewFlow()" id="startInterviewBtn" class="w-full sm:w-auto flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-500 text-white font-semibold text-sm px-8 py-3 rounded-xl shadow-lg shadow-blue-600/20 transition transform active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed">
+          <i data-lucide="play" class="w-4 h-4 fill-white"></i>
+          <span>Launch Voice Interview</span>
+        </button>
+      </div>
+
     </div>
 
     <!-- High-Precision Loading Indicator -->
     <div id="loadingIndicator" class="hidden flex flex-col items-center justify-center py-20 space-y-4">
       <div class="w-10 h-10 border-2 border-blue-500/20 border-t-blue-500 rounded-full animate-spin"></div>
-      <p id="loadingMessage" class="text-xs font-mono text-zinc-400 tracking-wide">Analyzing candidate profile & generating questions...</p>
+      <p id="loadingMessage" class="text-xs font-mono text-zinc-400 tracking-wide">Analyzing candidate background & building interview loop...</p>
     </div>
 
-    <!-- Step 2: Interactive Interview Session View -->
+    <!-- Step 2: Interactive Interview Session View (V3 Voice) -->
     <div id="interviewSection" class="hidden space-y-6">
       
       <!-- Top Session Dashboard Bar -->
@@ -177,7 +186,7 @@
         
         <div class="flex flex-wrap items-center justify-between gap-4">
           
-          <!-- Back Button, Progress & Topic -->
+          <!-- Back Button, Progress & Stage -->
           <div class="flex items-center gap-3">
             <button onclick="backToDashboard()" class="flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 hover:border-zinc-700 text-zinc-300 hover:text-white transition">
               <i data-lucide="arrow-left" class="w-3.5 h-3.5 text-zinc-400"></i>
@@ -186,14 +195,15 @@
             <div class="h-4 w-[1px] bg-zinc-800"></div>
             <div class="flex items-center gap-2">
               <span class="text-xs font-semibold text-white">Question</span>
-              <span id="questionCounter" class="text-xs font-mono font-bold px-2 py-0.5 rounded bg-zinc-800 text-blue-400 border border-zinc-700/60">1/5</span>
+              <span id="questionCounter" class="text-xs font-mono font-bold px-2 py-0.5 rounded bg-zinc-800 text-blue-400 border border-zinc-700/60">1/10</span>
             </div>
-            <div id="questionCategoryBadge" class="text-xs font-medium px-2.5 py-0.5 rounded bg-zinc-900 text-zinc-300 border border-zinc-800 hidden sm:inline-block">
-              Technical Assessment
+            <!-- Interview Stage Pill -->
+            <div id="questionStageBadge" class="text-xs font-semibold px-2.5 py-0.5 rounded bg-blue-500/10 text-blue-300 border border-blue-500/20">
+              Stage 1: Warm-up & Intro
             </div>
           </div>
 
-          <!-- Match Score & Skills Drawer Toggle -->
+          <!-- Timer, Match Score & Skills Drawer Toggle -->
           <div class="flex items-center gap-3">
             <!-- Timer Display -->
             <div class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-zinc-900/90 border border-zinc-800 text-xs text-zinc-300 font-mono">
@@ -219,7 +229,7 @@
 
         <!-- Progress Track Bar -->
         <div class="w-full bg-zinc-900 h-1.5 rounded-full overflow-hidden">
-          <div id="progressBarFill" class="bg-blue-500 h-full w-[20%] transition-all duration-300"></div>
+          <div id="progressBarFill" class="bg-blue-500 h-full w-[10%] transition-all duration-300"></div>
         </div>
 
         <!-- Collapsible Skills Drawer -->
@@ -249,38 +259,100 @@
 
       </div>
 
-      <!-- Question Card -->
-      <div class="surface-card rounded-xl p-6 sm:p-7 space-y-3">
-        <div class="flex items-center justify-between">
-          <div class="flex items-center gap-2">
-            <span class="text-[11px] font-mono uppercase tracking-wider text-blue-400 font-semibold">Technical Prompt</span>
-            <span id="targetSkillDisplay" class="text-[11px] font-mono text-zinc-400 bg-zinc-900 px-2 py-0.5 rounded border border-zinc-800">Target: Core Skill</span>
+      <!-- AI Voice Interviewer Question Surface -->
+      <div class="surface-card rounded-xl p-6 sm:p-7 space-y-4">
+        
+        <!-- Header & Audio Player Bar -->
+        <div class="flex flex-wrap items-center justify-between border-b border-zinc-800/80 pb-4 gap-3">
+          <div class="flex items-center gap-3">
+            <div class="w-9 h-9 rounded-lg bg-blue-600/10 border border-blue-500/30 flex items-center justify-center text-blue-400">
+              <i data-lucide="bot" class="w-5 h-5"></i>
+            </div>
+            <div>
+              <div class="text-xs font-bold text-white flex items-center gap-2">
+                <span>AI Technical Interviewer</span>
+                <span id="targetSkillDisplay" class="text-[10px] font-mono text-zinc-400 bg-zinc-900 px-2 py-0.5 rounded border border-zinc-800">Target: Core Skill</span>
+              </div>
+              <div class="text-[11px] text-zinc-400 font-medium" id="questionCategoryBadge">Category</div>
+            </div>
           </div>
-          <span id="questionDifficultyBadge" class="text-[11px] font-mono font-medium px-2 py-0.5 rounded bg-zinc-800 text-zinc-300 border border-zinc-700">Medium</span>
+
+          <!-- TTS Voice Controls -->
+          <div class="flex items-center gap-3">
+            
+            <!-- Voice Equalizer Waveform -->
+            <div id="voiceWaveVisualizer" class="h-5 flex items-center px-2 py-1 rounded bg-zinc-900 border border-zinc-800 hidden">
+              <span class="wave-bar"></span>
+              <span class="wave-bar"></span>
+              <span class="wave-bar"></span>
+              <span class="wave-bar"></span>
+              <span class="wave-bar"></span>
+              <span class="text-[10px] font-mono text-blue-400 ml-2">Speaking...</span>
+            </div>
+
+            <!-- Speak / Stop Voice Button -->
+            <button onclick="toggleTtsSpeech()" id="ttsPlayBtn" class="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-white transition shadow-sm">
+              <i data-lucide="volume-2" id="ttsPlayIcon" class="w-3.5 h-3.5"></i>
+              <span id="ttsPlayText">Speak Question</span>
+            </button>
+
+            <!-- Auto-Speak Toggle -->
+            <label class="flex items-center gap-1.5 text-xs text-zinc-400 cursor-pointer select-none">
+              <input type="checkbox" id="autoSpeakCheckbox" class="rounded border-zinc-700 text-blue-600 focus:ring-0" checked onchange="toggleAutoSpeakPref()">
+              <span>Auto-Speak</span>
+            </label>
+          </div>
         </div>
-        <p id="currentQuestionText" class="text-base sm:text-lg text-white font-medium leading-relaxed"></p>
+
+        <!-- Conversational Spoken Intro Callout -->
+        <div id="spokenIntroContainer" class="hidden bg-blue-950/20 border-l-2 border-blue-500 p-3 rounded-r-lg">
+          <p id="spokenIntroText" class="text-xs text-blue-200/90 italic"></p>
+        </div>
+
+        <!-- Main Question Text -->
+        <div class="space-y-1 pt-1">
+          <div class="text-[11px] font-mono uppercase tracking-wider text-zinc-400 font-semibold flex items-center justify-between">
+            <span>Interview Prompt</span>
+            <span id="questionDifficultyBadge" class="text-[10px] font-mono px-2 py-0.2 rounded bg-zinc-800 text-zinc-300 border border-zinc-700">Medium</span>
+          </div>
+          <p id="currentQuestionText" class="text-base sm:text-lg text-white font-medium leading-relaxed"></p>
+        </div>
+
       </div>
 
-      <!-- Candidate Answer Workspace -->
+      <!-- Candidate Answer Workspace (Voice STT + Text Editor) -->
       <div class="surface-card rounded-xl p-6 space-y-4">
-        <div class="flex items-center justify-between">
-          <label class="text-xs font-semibold text-zinc-300 uppercase tracking-wider flex items-center gap-1.5">
-            <i data-lucide="edit-3" class="w-3.5 h-3.5 text-blue-400"></i> Your Answer
-          </label>
+        
+        <div class="flex flex-wrap items-center justify-between gap-3">
+          <div class="flex items-center gap-2">
+            <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+            <label class="text-xs font-semibold text-zinc-300 uppercase tracking-wider">Candidate Response</label>
+          </div>
+          
           <div class="flex items-center gap-3">
             <span id="answerWordCount" class="text-[11px] font-mono text-zinc-400">0 words</span>
+
             <!-- Voice Speech-to-Text Button -->
-            <button onclick="toggleVoiceRecording()" id="voiceRecordBtn" title="Practice speaking your answer verbally" class="flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-md bg-zinc-800 hover:bg-zinc-700 text-zinc-300 border border-zinc-700/80 transition">
-              <i data-lucide="mic" class="w-3.5 h-3.5 text-rose-400"></i>
-              <span id="voiceRecordText">Voice Dictation</span>
+            <button onclick="toggleVoiceRecording()" id="voiceRecordBtn" title="Speak your response aloud" class="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-200 border border-zinc-700 transition">
+              <i data-lucide="mic" id="voiceRecordIcon" class="w-3.5 h-3.5 text-rose-400"></i>
+              <span id="voiceRecordText">Dictate Voice (STT)</span>
             </button>
           </div>
         </div>
 
-        <textarea id="userAnswerInput" rows="7" class="w-full bg-zinc-950/80 border border-zinc-800/80 rounded-lg p-3.5 text-sm text-zinc-200 placeholder-zinc-500 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 font-mono transition resize-none leading-relaxed" placeholder="Explain your architectural reasoning, key trade-offs, and technical implementation details..." oninput="updateAnswerWordCount()"></textarea>
+        <!-- Answer Textarea -->
+        <div class="space-y-1">
+          <textarea id="userAnswerInput" rows="7" class="w-full bg-zinc-950/80 border border-zinc-800/80 rounded-lg p-3.5 text-sm text-zinc-200 placeholder-zinc-500 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 font-mono transition resize-none leading-relaxed" placeholder="Click 'Dictate Voice' to speak your answer, or type your explanation and architectural trade-offs..." oninput="updateAnswerWordCount()"></textarea>
+          <div id="sttLiveFeedback" class="text-[11px] text-rose-400 font-mono hidden flex items-center gap-1.5 pt-1">
+            <span class="w-2 h-2 rounded-full bg-rose-500 animate-pulse"></span>
+            <span>Microphone active — speaking in real-time...</span>
+          </div>
+        </div>
         
         <div class="flex items-center justify-between pt-1">
-          <span class="text-[11px] text-zinc-400 hidden sm:inline-block">Tip: Structure your response with core definition, trade-offs, and production examples.</span>
+          <button onclick="clearAnswerInput()" class="text-xs text-zinc-500 hover:text-zinc-300 transition">
+            Clear Draft
+          </button>
           <div class="flex items-center gap-2 ml-auto">
             <button onclick="submitAnswerForEvaluation()" id="submitAnswerBtn" class="flex items-center gap-2 bg-blue-600 hover:bg-blue-500 text-white font-medium text-xs px-5 py-2.5 rounded-lg shadow-sm transition active:scale-95">
               <i data-lucide="check-circle" class="w-3.5 h-3.5"></i>
@@ -306,7 +378,7 @@
           </div>
 
           <button onclick="nextQuestion()" id="nextQuestionBtn" class="flex items-center gap-2 bg-blue-600 hover:bg-blue-500 text-white text-xs font-medium px-4 py-2.5 rounded-lg transition active:scale-95 shadow-sm">
-            <span>Next Question</span>
+            <span>Next Stage / Question</span>
             <i data-lucide="arrow-right" class="w-3.5 h-3.5"></i>
           </button>
         </div>
@@ -340,7 +412,7 @@
         <div class="space-y-2 bg-zinc-900/60 border border-zinc-800 rounded-lg p-4">
           <div class="flex items-center justify-between">
             <h4 class="text-xs font-bold uppercase tracking-wider text-zinc-300 flex items-center gap-1.5">
-              <i data-lucide="terminal" class="w-3.5 h-3.5 text-blue-400"></i> Staff Engineer Reference Answer
+              <i data-lucide="terminal" class="w-3.5 h-3.5 text-blue-400"></i> Staff Engineer Reference Answer (< 120 words)
             </h4>
             <button onclick="copyModelAnswer()" id="copyModelBtn" class="text-[11px] font-medium text-zinc-400 hover:text-zinc-200 flex items-center gap-1">
               <i data-lucide="copy" class="w-3 h-3"></i>
@@ -368,9 +440,9 @@
         <i data-lucide="award" class="w-6 h-6"></i>
       </div>
       <div class="space-y-2">
-        <h2 class="text-xl font-bold text-white">Mock Interview Round Complete</h2>
+        <h2 class="text-xl font-bold text-white">Full Interview Loop Complete!</h2>
         <p class="text-zinc-400 text-xs sm:text-sm leading-relaxed">
-          All technical questions evaluated and saved to your history database. You can review your scorecard, analysis, and benchmark answers anytime.
+          All 10 stages evaluated and saved to your history database. You can review your scores, benchmark answers, and delivery advice anytime.
         </p>
       </div>
       <div class="flex justify-center gap-3 pt-2">
@@ -378,7 +450,7 @@
           Review Inputs
         </button>
         <button onclick="createNewSession()" class="bg-blue-600 hover:bg-blue-500 text-white text-xs font-medium px-5 py-2.5 rounded-lg transition">
-          Start Next Session
+          Start Next Interview
         </button>
       </div>
     </div>

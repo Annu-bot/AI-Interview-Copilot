@@ -35,14 +35,18 @@ def test_analysis_response_schema():
 def test_question_schema():
     q = InterviewQuestion(
         id=1,
-        category=QuestionCategory.SKILL_GAP,
-        target_skill_or_topic="FastAPI Concurrency",
-        difficulty=DifficultyLevel.HARD,
-        question_text="How does FastAPI handle async vs sync endpoints with threadpools?",
-        evaluation_criteria="Candidate should explain event loops, worker threads for def vs async def."
+        stage="Stage 1: Warm-up & Intro",
+        category=QuestionCategory.INTRODUCTION,
+        target_skill_or_topic="Engineering Background",
+        difficulty=DifficultyLevel.EASY,
+        spoken_intro="Welcome! Let's start with a brief walk-through of your background.",
+        question_text="Could you walk me through your engineering career and a recent complex system you designed?",
+        evaluation_criteria="Clear communication, structured summary, mentions production impact."
     )
     assert q.id == 1
-    assert q.difficulty == DifficultyLevel.HARD
+    assert q.stage == "Stage 1: Warm-up & Intro"
+    assert q.spoken_intro.startswith("Welcome")
+    assert q.category == QuestionCategory.INTRODUCTION
 
 
 def test_evaluation_schema():

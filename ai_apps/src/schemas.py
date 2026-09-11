@@ -31,11 +31,12 @@ class AnalysisResponse(BaseModel):
 
 # --- Question Generation Schemas ---
 class QuestionCategory(str, Enum):
-    SKILL_GAP = "Skill Gap Deep-Dive"
+    INTRODUCTION = "Warm-up & Background Introduction"
     PROJECT_VERIFICATION = "Project & Experience Verification"
+    SKILL_GAP = "Skill Gap Deep-Dive"
     SYSTEM_DESIGN = "System Design & Architecture"
     CODING_PROBLEM_SOLVING = "Coding & Problem Solving"
-    BEHAVIORAL = "Behavioral & Communication"
+    BEHAVIORAL = "Behavioral & Engineering Culture"
 
 
 class DifficultyLevel(str, Enum):
@@ -45,11 +46,13 @@ class DifficultyLevel(str, Enum):
 
 
 class InterviewQuestion(BaseModel):
-    id: int = Field(..., description="Unique sequential question number")
+    id: int = Field(..., description="Unique sequential question number (1 to 10)")
+    stage: str = Field(default="Core Technical Deep-Dive", description="Interview phase or stage name")
     category: QuestionCategory = Field(description="Category of the interview question")
     target_skill_or_topic: str = Field(description="Target skill tested")
     difficulty: DifficultyLevel = Field(default=DifficultyLevel.MEDIUM, description="Difficulty level")
-    question_text: str = Field(..., description="The interview question")
+    spoken_intro: Optional[str] = Field(default="", description="Conversational spoken transition for TTS before asking the question")
+    question_text: str = Field(..., description="The interview question text")
     evaluation_criteria: str = Field(..., description="Key concepts required for an ideal answer")
 
 
@@ -57,7 +60,7 @@ class QuestionGenerationRequest(BaseModel):
     resume_text: str = Field(..., min_length=10)
     job_description_text: str = Field(..., min_length=10)
     missing_skills: Optional[List[str]] = Field(default_factory=list, description="Skill gaps to prioritize")
-    num_questions: int = Field(default=5, ge=1, le=10, description="Total questions to generate")
+    num_questions: int = Field(default=10, ge=1, le=10, description="Total questions to generate (up to 10)")
     session_id: Optional[int] = Field(default=None, description="Database Session ID")
 
 
@@ -72,6 +75,7 @@ class QuestionGenerationResponse(BaseModel):
 class StartInterviewRequest(BaseModel):
     resume_text: str = Field(..., min_length=10, description="Candidate resume text")
     job_description_text: str = Field(..., min_length=10, description="Job description text")
+    num_questions: int = Field(default=10, ge=3, le=10, description="Total questions for full mock interview (3 to 10)")
     session_id: Optional[int] = Field(default=None, description="Optional existing session ID")
 
 
@@ -102,7 +106,7 @@ class AnswerEvaluation(BaseModel):
     strengths: List[str] = Field(default_factory=list, description="Key points answered well")
     missing_points_and_gaps: List[str] = Field(default_factory=list, description="Missing concepts or gaps")
     detailed_feedback: str = Field(..., description="Constructive feedback explaining the score")
-    ideal_model_answer: str = Field(..., description="Senior engineer benchmark answer")
+    ideal_model_answer: str = Field(..., description="Concise, senior engineer benchmark answer under 120 words")
     interview_tips: List[str] = Field(default_factory=list, description="Communication and technical tips")
 
 

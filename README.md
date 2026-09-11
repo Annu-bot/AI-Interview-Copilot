@@ -1,21 +1,22 @@
 # AI Interview Copilot
 
-An AI-assisted technical interview preparation system designed for software engineers and technical candidates. It performs semantic chunking, vector embedding, and RAG retrieval across resumes and target job descriptions to identify skill gaps, generate grounded interview questions, and evaluate responses against staff-level engineering rubrics.
+An AI-assisted technical interview preparation system designed for software engineers and technical candidates. It combines semantic document chunking, ChromaDB vector retrieval (RAG), text-to-speech synthesis (TTS), live speech recognition (STT), and staff-level rubric scoring across a realistic 10-question interview loop.
 
 ## Key Features
 
-- Document Ingestion and Chunking: Parses PDF, DOCX, and text resumes/JDs and performs section-aware semantic chunking.
-- Dual-Engine Vector Embeddings (RAG): Generates dense embeddings using Google Gemini (Cloud API default) or local embedding models (Ollama/SentenceTransformers) via the `LOCAL_EMBED` flag.
+- Voice Interviewer (TTS & STT): Built-in Web Speech Synthesis speaks questions aloud with an audio waveform visualizer, while Web Speech Recognition transcribes candidate verbal responses in real-time.
+- 10-Stage Real-Life Interview Loop: Simulates a complete technical interview progression (Warm-up Introduction -> Resume Project Verification -> Skill Gap Assessment -> High-Scale System Design -> Engineering Culture & Outage Post-Mortems).
+- Dual-Engine Vector Embeddings (RAG): Generates dense embeddings using Google Gemini (`models/gemini-embedding-001` default) or local models (Ollama `nomic-embed-text`) via the `LOCAL_EMBED` flag.
 - Persistent Vector Store: Indexes resume evidence and job requirements into ChromaDB with cosine similarity retrieval.
 - Grounded Question Generation: Generates scenario-based technical questions directly grounded in candidate project claims and target company requirements.
-- Rubric-Based Response Evaluation: Evaluates user responses on conceptual depth, system design trade-offs, and practical execution, accompanied by reference answers.
-- Session History: Persists interview rounds, question logs, and evaluations in a local SQLite database for progress tracking.
+- Concise Rubric Answer Evaluation: Evaluates user responses on conceptual depth, system design trade-offs, and practical execution, accompanied by concise benchmark model answers (under 120 words).
+- Session History: Persists interview rounds, question logs, audio transcripts, and evaluations in a local SQLite database for progress tracking.
 
 ## Tech Stack
 
 - Backend: FastAPI, Pydantic v2, SQLAlchemy, Uvicorn
 - AI & Embeddings: Google Gemini API, ChromaDB, NumPy (with local Ollama embedding routing)
-- Frontend: Vanilla JavaScript, CSS3, Tailwind CSS, Lucide icons, HTML5 (Jinja2 templates)
+- Voice & Frontend: Web Speech API (Synthesis & Recognition), Vanilla JavaScript, CSS3, Tailwind CSS, Lucide icons, HTML5 (Jinja2 templates)
 - Document Processing: PyPDF, python-docx
 - Testing: Pytest
 
@@ -32,7 +33,7 @@ AI-Interview-Copilot/
 │   ├── settings.py         # Application settings loaded via Pydantic
 │   ├── local.env.example   # Example environment configuration for local dev
 │   └── deploy.env.example  # Example environment configuration for production
-├── static/                 # Stylesheets, design system, and client-side JavaScript
+├── static/                 # Stylesheets, waveform animations, and client-side JavaScript
 ├── templates/              # HTML layout templates
 ├── tests/                  # Unit, embedding, and RAG integration test suite
 ├── deploy/                 # Dockerfile and docker-compose configurations
@@ -94,7 +95,7 @@ GEMINI_MODEL=gemini-2.5-flash
 # RAG & Embedding Routing
 LOCAL_EMBED=False
 USE_LOCAL_EMBEDDINGS=False
-GEMINI_EMBEDDING_MODEL=models/text-embedding-004
+GEMINI_EMBEDDING_MODEL=models/gemini-embedding-001
 LOCAL_EMBEDDING_BASE_URL=http://localhost:11434
 LOCAL_EMBEDDING_MODEL=nomic-embed-text
 ```

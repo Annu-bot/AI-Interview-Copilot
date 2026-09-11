@@ -39,12 +39,13 @@ Return the structured analysis strictly adhering to the specified schema.
         resume_text: str,
         jd_text: str,
         missing_skills: Optional[List[str]] = None,
-        num_questions: int = 5,
+        num_questions: int = 10,
         session_id: Optional[int] = None,
     ) -> QuestionGenerationResponse:
         """
         Generates targeted interview questions focusing on gaps and core JD requirements,
-        semantically grounded in specific resume project bullet points and job requirements.
+        semantically grounded in specific resume project bullet points and job requirements,
+        structured across realistic interview stages (Warm-up, Project Deep-Dive, Skill Gaps, System Design, Culture).
         """
         logger.info(f"Generating {num_questions} targeted interview questions (Session: {session_id})...")
         
@@ -56,7 +57,7 @@ Return the structured analysis strictly adhering to the specified schema.
         rag_context_block = ""
         if session_id and missing_skills:
             evidence_blocks = []
-            for skill in missing_skills[:3]:
+            for skill in missing_skills[:4]:
                 ctx = rag_service.get_grounding_context(session_id=session_id, topic_or_skill=skill, top_k=2)
                 if ctx.get("prompt_block"):
                     evidence_blocks.append(ctx["prompt_block"])
@@ -72,11 +73,22 @@ Return the structured analysis strictly adhering to the specified schema.
 {rag_context_block}
 
 ### TASK:
-Generate exactly {num_questions} distinct, high-impact interview questions.
-Ensure the questions are GROUNDED in the candidate's background and target job requirements:
-1. Skill Gap Deep-Dives: Target missing or weak competencies identified against the JD.
-2. Experience Verification: Reference specific claims, tools, or projects mentioned in the candidate's resume.
-3. System Design & Engineering Trade-offs: Test practical judgment and production scenarios relevant to the JD.
+Generate exactly {num_questions} distinct, high-impact interview questions simulating a complete real-life technical interview loop:
+1. Question 1 (Warm-up): Welcoming intro asking the candidate to introduce their background and recent engineering achievements.
+2. Questions 2-{min(4, num_questions)} (Project Deep-Dive): Verify concrete resume projects, tools, and implementation decisions.
+3. Questions {min(5, num_questions)}-{min(7, num_questions)} (Skill Gaps & Core JD): Probe directly on missing or weak competencies required by the JD.
+4. Questions {min(8, num_questions)}-{min(9, num_questions)} (System Design): Scalability, concurrency, failure modes, caching, and trade-offs.
+5. Question {num_questions} (Engineering Culture): Production outage handling, architectural trade-off disagreements, and candidate wrap-up.
+
+For every question provide:
+- `id`: Sequential integer (1 to {num_questions})
+- `stage`: Name of the interview stage
+- `category`: Question category enum
+- `target_skill_or_topic`: Target skill/area tested
+- `difficulty`: Easy / Medium / Hard
+- `spoken_intro`: A natural conversational sentence for AI Voice TTS before stating the question
+- `question_text`: The full technical question
+- `evaluation_criteria`: Criteria for scoring
 
 Return the result strictly conforming to the QuestionGenerationResponse schema.
 """

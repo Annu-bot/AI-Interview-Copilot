@@ -50,7 +50,7 @@ async def home_view(request: Request):
         name="index.html",
         context={
             "app_name": settings.APP_NAME,
-            "version": settings.APP_VERSION,
+            "version": "3.0.0",
             "environment": settings.ENVIRONMENT,
         },
     )
@@ -67,7 +67,7 @@ async def health_view():
     return {
         "status": "online",
         "app_name": settings.APP_NAME,
-        "version": settings.APP_VERSION,
+        "version": "3.0.0",
         "environment": settings.ENVIRONMENT,
         "use_open_source": settings.USE_OPEN_SOURCE,
         "provider": "Local Open Source" if settings.USE_OPEN_SOURCE else "Google Gemini (Cloud)",
@@ -75,6 +75,7 @@ async def health_view():
         "use_local_embeddings": settings.is_local_embed,
         "embedding_model": settings.LOCAL_EMBEDDING_MODEL if settings.is_local_embed else settings.GEMINI_EMBEDDING_MODEL,
         "rag_vector_engine": "ChromaDB + Cosine Search",
+        "voice_capabilities": ["Web Speech Synthesis (TTS)", "Web Speech Recognition (STT)"],
     }
 
 
@@ -119,7 +120,7 @@ async def start_interview_view(request: StartInterviewRequest, db: Session = Dep
     1. Analyzes resume vs JD for skill gaps and fit score.
     2. Saves session to SQLite.
     3. Indexes resume & JD chunks into RAG Vector Store (Cloud or Local embeddings).
-    4. Generates questions grounded in candidate resume projects and JD requirements.
+    4. Generates up to 10 structured questions across interview stages (Warm-up, Projects, Gaps, System Design, Culture).
     """
     try:
         # Step 1: Analyze Skills & Fit
@@ -147,12 +148,13 @@ async def start_interview_view(request: StartInterviewRequest, db: Session = Dep
         except Exception as rag_err:
             logger.warning(f"RAG vector indexing encountered non-fatal error: {rag_err}")
 
-        # Step 4: Generate RAG Grounded Questions
+        # Step 4: Generate RAG Grounded Questions (Up to 10 Questions with Intro & Stages)
+        num_q = request.num_questions if request.num_questions else 10
         questions_result = skill_gap_analyzer.generate_interview_questions(
             resume_text=request.resume_text,
             jd_text=request.job_description_text,
             missing_skills=analysis_result.missing_skills,
-            num_questions=5,
+            num_questions=num_q,
             session_id=saved_session.id,
         )
 
@@ -230,14 +232,15 @@ async def analyze_skills_view(request: AnalysisRequest, db: Session = Depends(ge
 @router.post("/api/v1/generate-questions", response_model=QuestionGenerationResponse, tags=["AI Questions"])
 async def generate_questions_view(request: QuestionGenerationRequest, db: Session = Depends(get_db)):
     """
-    Generates RAG-grounded interview questions and links them to the active session in DB.
+    Generates RAG-grounded interview questions (up to 10) and links them to the active session in DB.
     """
     try:
+        num_q = request.num_questions if request.num_questions else 10
         questions_result = skill_gap_analyzer.generate_interview_questions(
             resume_text=request.resume_text,
             jd_text=request.job_description_text,
             missing_skills=request.missing_skills,
-            num_questions=request.num_questions,
+            num_questions=num_q,
             session_id=request.session_id,
         )
 

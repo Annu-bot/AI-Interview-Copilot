@@ -1,8 +1,8 @@
 // -------------------------------------------------------------
-// AI Interview Copilot - Frontend Application Core
+// AI Interview Copilot - V3 Voice & Adaptive Interview Core
 // -------------------------------------------------------------
 
-// Global State
+// Global Application State
 let activeSessionId = null;
 let activeResumeText = "";
 let activeJdText = "";
@@ -15,7 +15,12 @@ let userEvaluations = [];
 let timerInterval = null;
 let timerSeconds = 0;
 
-// Speech Recognition State
+// Speech Synthesis (TTS) State
+let isSpeakingTts = false;
+let autoSpeakEnabled = true;
+let synthVoices = [];
+
+// Speech Recognition (STT) State
 let recognition = null;
 let isRecordingVoice = false;
 
@@ -24,7 +29,9 @@ document.addEventListener("DOMContentLoaded", async () => {
   await refreshHistoryList();
   setupDragAndDrop();
   setupKeyboardShortcuts();
+  initSpeechSynthesis();
   initSpeechRecognition();
+  loadAutoSpeakPref();
 });
 
 // Setup Global Keyboard Shortcuts
@@ -45,7 +52,236 @@ function setupKeyboardShortcuts() {
   });
 }
 
+// -------------------------------------------------------------
+// Speech Synthesis (TTS) Engine — AI Speaks Question
+// -------------------------------------------------------------
+function initSpeechSynthesis() {
+  if (!("speechSynthesis" in window)) {
+    console.warn("Speech Synthesis is not supported in this browser.");
+    const ttsBtn = document.getElementById("ttsPlayBtn");
+    if (ttsBtn) ttsBtn.classList.add("hidden");
+    return;
+  }
+
+  // Load available system voices
+  function populateVoices() {
+    synthVoices = window.speechSynthesis.getVoices();
+  }
+
+  populateVoices();
+  if (speechSynthesis.onvoiceschanged !== undefined) {
+    speechSynthesis.onvoiceschanged = populateVoices;
+  }
+}
+
+function getBestEnglishVoice() {
+  if (!synthVoices || synthVoices.length === 0) {
+    synthVoices = window.speechSynthesis.getVoices();
+  }
+
+  // Prefer high quality / natural English voices
+  const preferredNames = ["Google US English", "Samantha", "Microsoft David", "Natural", "Daniel", "Karen"];
+  for (const name of preferredNames) {
+    const found = synthVoices.find((v) => v.name.includes(name) && v.lang.startsWith("en"));
+    if (found) return found;
+  }
+
+  // Fallback to any English voice
+  const enVoice = synthVoices.find((v) => v.lang.startsWith("en"));
+  return enVoice || synthVoices[0] || null;
+}
+
+function toggleTtsSpeech() {
+  if (isSpeakingTts) {
+    stopTtsSpeech();
+  } else {
+    speakCurrentQuestion();
+  }
+}
+
+function speakCurrentQuestion() {
+  if (!("speechSynthesis" in window)) return;
+  stopTtsSpeech();
+
+  if (!currentQuestions || currentQuestionIndex >= currentQuestions.length) return;
+
+  const q = currentQuestions[currentQuestionIndex];
+  const intro = q.spoken_intro ? `${q.spoken_intro}. ` : "";
+  const textToSpeak = `${intro}${q.question_text || ""}`;
+
+  if (!textToSpeak.trim()) return;
+
+  const utterance = new SpeechSynthesisUtterance(textToSpeak);
+  const voice = getBestEnglishVoice();
+  if (voice) utterance.voice = voice;
+
+  utterance.rate = 1.0;
+  utterance.pitch = 1.0;
+
+  utterance.onstart = () => {
+    isSpeakingTts = true;
+    updateTtsUi(true);
+  };
+
+  utterance.onend = () => {
+    isSpeakingTts = false;
+    updateTtsUi(false);
+  };
+
+  utterance.onerror = (e) => {
+    console.warn("TTS Error:", e);
+    isSpeakingTts = false;
+    updateTtsUi(false);
+  };
+
+  window.speechSynthesis.speak(utterance);
+}
+
+function stopTtsSpeech() {
+  if ("speechSynthesis" in window) {
+    window.speechSynthesis.cancel();
+  }
+  isSpeakingTts = false;
+  updateTtsUi(false);
+}
+
+function updateTtsUi(speaking) {
+  const ttsBtnText = document.getElementById("ttsPlayText");
+  const ttsBtnIcon = document.getElementById("ttsPlayIcon");
+  const waveVisualizer = document.getElementById("voiceWaveVisualizer");
+
+  if (speaking) {
+    if (ttsBtnText) ttsBtnText.textContent = "Stop Voice";
+    if (ttsBtnIcon) ttsBtnIcon.setAttribute("data-lucide", "square");
+    if (waveVisualizer) {
+      waveVisualizer.classList.remove("hidden");
+      waveVisualizer.classList.add("wave-active");
+    }
+  } else {
+    if (ttsBtnText) ttsBtnText.textContent = "Speak Question";
+    if (ttsBtnIcon) ttsBtnIcon.setAttribute("data-lucide", "volume-2");
+    if (waveVisualizer) {
+      waveVisualizer.classList.add("hidden");
+      waveVisualizer.classList.remove("wave-active");
+    }
+  }
+  if (window.lucide) lucide.createIcons();
+}
+
+function toggleAutoSpeakPref() {
+  const checkbox = document.getElementById("autoSpeakCheckbox");
+  autoSpeakEnabled = checkbox ? checkbox.checked : true;
+  localStorage.setItem("interview_copilot_auto_speak", autoSpeakEnabled ? "1" : "0");
+}
+
+function loadAutoSpeakPref() {
+  const saved = localStorage.getItem("interview_copilot_auto_speak");
+  if (saved !== null) {
+    autoSpeakEnabled = saved === "1";
+    const checkbox = document.getElementById("autoSpeakCheckbox");
+    if (checkbox) checkbox.checked = autoSpeakEnabled;
+  }
+}
+
+// -------------------------------------------------------------
+// Speech Recognition (STT) Engine — Candidate Speaks Answer
+// -------------------------------------------------------------
+function initSpeechRecognition() {
+  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SpeechRecognition) {
+    console.warn("Speech recognition is not supported in this browser.");
+    const voiceBtn = document.getElementById("voiceRecordBtn");
+    if (voiceBtn) voiceBtn.classList.add("hidden");
+    return;
+  }
+
+  recognition = new SpeechRecognition();
+  recognition.continuous = true;
+  recognition.interimResults = true;
+  recognition.lang = "en-US";
+
+  recognition.onresult = (event) => {
+    let interimTranscript = "";
+    let finalTranscript = "";
+
+    for (let i = event.resultIndex; i < event.results.length; i++) {
+      const transcript = event.results[i][0].transcript;
+      if (event.results[i].isFinal) {
+        finalTranscript += transcript + " ";
+      } else {
+        interimTranscript += transcript;
+      }
+    }
+
+    const input = document.getElementById("userAnswerInput");
+    if (finalTranscript) {
+      input.value = (input.value ? input.value.trim() + " " : "") + finalTranscript.trim();
+    }
+    updateAnswerWordCount();
+  };
+
+  recognition.onerror = (event) => {
+    console.warn("Speech recognition error:", event.error);
+    stopVoiceRecording();
+  };
+
+  recognition.onend = () => {
+    if (isRecordingVoice) stopVoiceRecording();
+  };
+}
+
+function toggleVoiceRecording() {
+  if (!recognition) {
+    alert("Speech recognition is not supported in your browser. Please try Google Chrome or Microsoft Edge.");
+    return;
+  }
+
+  if (isRecordingVoice) {
+    stopVoiceRecording();
+  } else {
+    startVoiceRecording();
+  }
+}
+
+function startVoiceRecording() {
+  // Stop AI speech if user starts talking
+  stopTtsSpeech();
+
+  try {
+    recognition.start();
+    isRecordingVoice = true;
+    const btn = document.getElementById("voiceRecordBtn");
+    if (btn) btn.classList.add("mic-recording");
+    const textEl = document.getElementById("voiceRecordText");
+    if (textEl) textEl.textContent = "Listening...";
+    const feedback = document.getElementById("sttLiveFeedback");
+    if (feedback) feedback.classList.remove("hidden");
+  } catch (e) {
+    console.error("Could not start speech recognition", e);
+  }
+}
+
+function stopVoiceRecording() {
+  try {
+    recognition.stop();
+  } catch (e) {}
+  isRecordingVoice = false;
+  const btn = document.getElementById("voiceRecordBtn");
+  if (btn) btn.classList.remove("mic-recording");
+  const textEl = document.getElementById("voiceRecordText");
+  if (textEl) textEl.textContent = "Dictate Voice (STT)";
+  const feedback = document.getElementById("sttLiveFeedback");
+  if (feedback) feedback.classList.add("hidden");
+}
+
+function clearAnswerInput() {
+  document.getElementById("userAnswerInput").value = "";
+  updateAnswerWordCount();
+}
+
+// -------------------------------------------------------------
 // Drag & Drop File Upload Handlers
+// -------------------------------------------------------------
 function setupDragAndDrop() {
   setupDropZone("resumeDropzone", "resumeFile", "resumeText", "resumeFileStatus");
   setupDropZone("jdDropzone", "jdFile", "jdText", "jdFileStatus");
@@ -95,7 +331,7 @@ function updateAnswerWordCount() {
 
 // Quick Sample Demo Loader
 function loadSampleData() {
-  const sampleResume = `SENIOR BACKEND ENGINEER
+  const sampleResume = `SENIOR DISTRIBUTED SYSTEMS ENGINEER
 Experience:
 - 5+ years designing RESTful APIs and distributed backend services in Python (FastAPI, Django).
 - Built relational database schemas in PostgreSQL with SQLAlchemy, optimizing slow queries with indexing.
@@ -177,10 +413,14 @@ async function handleFileUpload(event, targetTextareaId, statusId) {
   }
 }
 
-// 1-Click Start Interview Flow
+// -------------------------------------------------------------
+// 1-Click Start Interview Flow (Up to 10 Questions with Intro & Stages)
+// -------------------------------------------------------------
 async function startInterviewFlow() {
   const resumeText = document.getElementById("resumeText").value.trim();
   const jdText = document.getElementById("jdText").value.trim();
+  const questionCountSelect = document.getElementById("questionCountSelect");
+  const numQuestions = questionCountSelect ? parseInt(questionCountSelect.value, 10) : 10;
 
   if (!resumeText || !jdText) {
     alert("Please provide both Resume and Job Description (paste text or upload files).");
@@ -190,7 +430,7 @@ async function startInterviewFlow() {
   activeResumeText = resumeText;
   activeJdText = jdText;
 
-  showLoading(true, "Evaluating skill matches & generating customized interview questions...");
+  showLoading(true, `Analyzing candidate profile & assembling ${numQuestions}-question interview loop...`);
 
   try {
     const res = await fetch("/api/v1/start-interview", {
@@ -199,6 +439,7 @@ async function startInterviewFlow() {
       body: JSON.stringify({
         resume_text: resumeText,
         job_description_text: jdText,
+        num_questions: numQuestions,
         session_id: activeSessionId,
       }),
     });
@@ -291,6 +532,9 @@ function switchToInterviewView() {
 // Return to Dashboard View
 function backToDashboard() {
   stopTimer();
+  stopTtsSpeech();
+  stopVoiceRecording();
+
   document.getElementById("heroSection").classList.remove("hidden");
   document.getElementById("inputSection").classList.remove("hidden");
   document.getElementById("actionSection").classList.remove("hidden");
@@ -311,11 +555,14 @@ function backToDashboard() {
   if (window.lucide) lucide.createIcons();
 }
 
-// Load Current Question
+// -------------------------------------------------------------
+// Load & Render Current Question with Voice TTS
+// -------------------------------------------------------------
 function loadCurrentQuestion() {
-  if (!currentQuestions || currentQuestions.length === 0) {
-    return;
-  }
+  stopTtsSpeech();
+  stopVoiceRecording();
+
+  if (!currentQuestions || currentQuestions.length === 0) return;
 
   if (currentQuestionIndex >= currentQuestions.length) {
     showFinalSummary();
@@ -324,10 +571,27 @@ function loadCurrentQuestion() {
 
   const q = currentQuestions[currentQuestionIndex];
   document.getElementById("questionCounter").textContent = `${currentQuestionIndex + 1}/${currentQuestions.length}`;
+  
+  // Render Stage & Category
+  const stageBadge = document.getElementById("questionStageBadge");
+  if (stageBadge) {
+    stageBadge.textContent = q.stage || `Stage ${currentQuestionIndex + 1}: Technical Deep-Dive`;
+  }
+
   document.getElementById("questionCategoryBadge").textContent = q.category || "Technical Assessment";
   document.getElementById("questionDifficultyBadge").textContent = q.difficulty || "Medium";
   document.getElementById("targetSkillDisplay").textContent = `Target: ${q.target_skill_or_topic || "Core Topic"}`;
   document.getElementById("currentQuestionText").textContent = q.question_text || "";
+
+  // Render Spoken Intro Callout
+  const spokenContainer = document.getElementById("spokenIntroContainer");
+  const spokenText = document.getElementById("spokenIntroText");
+  if (q.spoken_intro && q.spoken_intro.trim()) {
+    spokenText.textContent = `"${q.spoken_intro}"`;
+    spokenContainer.classList.remove("hidden");
+  } else {
+    spokenContainer.classList.add("hidden");
+  }
 
   // Progress Bar
   const progressPercent = Math.round(((currentQuestionIndex + 1) / currentQuestions.length) * 100);
@@ -352,6 +616,13 @@ function loadCurrentQuestion() {
     document.getElementById("submitAnswerBtn").disabled = false;
     document.getElementById("liveEvaluationCard").classList.add("hidden");
     updateAnswerWordCount();
+
+    // Auto-Speak Question via TTS if enabled
+    if (autoSpeakEnabled) {
+      setTimeout(() => {
+        speakCurrentQuestion();
+      }, 400);
+    }
   }
 
   document.getElementById("interviewSection").scrollIntoView({ behavior: "smooth" });
@@ -367,6 +638,9 @@ async function submitAnswerForEvaluation() {
   }
 
   stopTimer();
+  stopTtsSpeech();
+  stopVoiceRecording();
+
   const q = currentQuestions[currentQuestionIndex];
 
   showLoading(true, "Staff Engineer Evaluator is scoring your response...");
@@ -491,6 +765,9 @@ function nextQuestion() {
 // Final Summary Screen
 function showFinalSummary() {
   stopTimer();
+  stopTtsSpeech();
+  stopVoiceRecording();
+
   document.getElementById("interviewSection").classList.add("hidden");
   document.getElementById("finalSummarySection").classList.remove("hidden");
   if (window.lucide) lucide.createIcons();
@@ -499,6 +776,9 @@ function showFinalSummary() {
 // Reset / Start Fresh Session
 function createNewSession() {
   stopTimer();
+  stopTtsSpeech();
+  stopVoiceRecording();
+
   activeSessionId = null;
   activeResumeText = "";
   activeJdText = "";
@@ -559,77 +839,6 @@ function updateTimerDisplay() {
   const timerEl = document.getElementById("questionTimer");
   if (timerEl) {
     timerEl.textContent = `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
-  }
-}
-
-// Speech Recognition Voice Dictation
-function initSpeechRecognition() {
-  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-  if (!SpeechRecognition) {
-    const voiceBtn = document.getElementById("voiceRecordBtn");
-    if (voiceBtn) voiceBtn.classList.add("hidden");
-    return;
-  }
-
-  recognition = new SpeechRecognition();
-  recognition.continuous = true;
-  recognition.interimResults = true;
-  recognition.lang = "en-US";
-
-  recognition.onresult = (event) => {
-    let transcript = "";
-    for (let i = event.resultIndex; i < event.results.length; i++) {
-      transcript += event.results[i][0].transcript;
-    }
-    const input = document.getElementById("userAnswerInput");
-    input.value = (input.value ? input.value + " " : "") + transcript;
-    updateAnswerWordCount();
-  };
-
-  recognition.onerror = (event) => {
-    console.warn("Speech recognition error:", event.error);
-    stopVoiceRecording();
-  };
-
-  recognition.onend = () => {
-    if (isRecordingVoice) stopVoiceRecording();
-  };
-}
-
-function toggleVoiceRecording() {
-  if (!recognition) {
-    alert("Speech recognition is not supported in this browser. Please try Google Chrome or Microsoft Edge.");
-    return;
-  }
-
-  if (isRecordingVoice) {
-    stopVoiceRecording();
-  } else {
-    startVoiceRecording();
-  }
-}
-
-function startVoiceRecording() {
-  try {
-    recognition.start();
-    isRecordingVoice = true;
-    const btn = document.getElementById("voiceRecordBtn");
-    btn.classList.add("mic-recording");
-    document.getElementById("voiceRecordText").textContent = "Listening...";
-  } catch (e) {
-    console.error("Could not start speech recognition", e);
-  }
-}
-
-function stopVoiceRecording() {
-  try {
-    recognition.stop();
-  } catch (e) {}
-  isRecordingVoice = false;
-  const btn = document.getElementById("voiceRecordBtn");
-  if (btn) {
-    btn.classList.remove("mic-recording");
-    document.getElementById("voiceRecordText").textContent = "Voice Dictation";
   }
 }
 

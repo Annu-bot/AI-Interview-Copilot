@@ -23,6 +23,10 @@ The system is a FastAPI-powered technical interview preparation copilot structur
                ▼                         ▼
    [Skill Gap Analyzer]         [Answer Evaluator]
   (Grounded RAG Questions)    (Rubric Scoring & Model Answers)
+               │                         │
+               ▼                         ▼
+   [Web Speech TTS Engine]      [Web Speech STT Engine]
+   (AI Speaks with Waveform)    (Candidate Dictates Voice)
 ```
 
 1. **Document Ingestion & Section Chunking (`ai_apps/src/chunker.py`):** Splits candidate resumes and job descriptions into structured chunks (e.g. *Work Experience*, *Projects*, *Skills*, *Responsibilities*, *Requirements*).
@@ -32,6 +36,7 @@ The system is a FastAPI-powered technical interview preparation copilot structur
 3. **Vector Database (`ai_apps/src/vector_store.py`):** Persistent ChromaDB collection per interview session with cosine similarity search.
 4. **RAG Context Grounding (`ai_apps/src/rag_service.py`):** Injects actual resume projects and JD requirements into LLM prompts.
 5. **Structured Assessment Engine (`ai_apps/src/analyzer.py`, `ai_apps/src/evaluator.py`):** Generates gap-focused questions and scores typed/spoken responses against staff-level rubrics.
+6. **Voice Synthesis & Recognition (`static/app.js`):** Web Speech API for bi-directional spoken interactions.
 
 ---
 
@@ -81,7 +86,23 @@ The system is a FastAPI-powered technical interview preparation copilot structur
 
 ---
 
-## 3. Troubleshooting & Error Post-Mortems
+## 3. V3 Voice Interviewer Architecture (TTS + STT + 10-Stage Loop)
+
+### 1. Real-Time Conversational Voice Features:
+- **Web Speech Synthesis (TTS):** The AI interviewer speaks questions aloud with natural pacing, spoken transitions (`spoken_intro`), and a live audio waveform visualizer.
+- **Web Speech Recognition (STT):** Candidates can dictate their responses verbally in real-time.
+- **Auto-Speak Control:** Toggleable auto-play on question load.
+
+### 2. 10-Stage Real-Life Interview Progression:
+1. **Stage 1: Warm-up & Professional Background Introduction (Question 1)** — Welcomes the candidate, sets expectations, and asks for a career summary and recent architectural highlight.
+2. **Stage 2: Resume Project Deep-Dive & Claim Verification (Questions 2 - 4)** — Inquires into specific tools and frameworks claimed on the candidate's resume (e.g. FastAPI concurrency, Redis cache invalidation).
+3. **Stage 3: Skill Gap Deep-Dive & Core JD Competencies (Questions 5 - 7)** — Tests missing or weak competencies identified from the Job Description (e.g. Kafka partition rebalancing, Kubernetes auto-scaling).
+4. **Stage 4: High-Scale System Design & Architectural Trade-offs (Questions 8 - 9)** — Scenarios handling high throughput (100k QPS, data partitioning, consistency vs availability).
+5. **Stage 5: Behavioral, Outages & Engineering Culture Wrap-up (Question 10)** — Production outage post-mortems, handling technical disagreements, and candidate wrap-up.
+
+---
+
+## 4. Troubleshooting & Error Post-Mortems
 
 ### Error #001: Gemini Embedding 404 (`models/text-embedding-004 not found for v1beta`)
 
@@ -104,7 +125,7 @@ Cloud Gemini embedding failed (404 models/text-embedding-004 is not found for AP
 
 ---
 
-## 4. Answer Design: Concise & Verbal-Ready Benchmark Answers
+## 5. Answer Design: Concise & Verbal-Ready Benchmark Answers
 
 ### Problem:
 Early versions produced long (400-500 word) textbook answers. While technically thorough, long monologues are:
@@ -129,7 +150,7 @@ Updated `SYSTEM_PROMPT_EVALUATION` and `ai_apps/src/evaluator.py` to enforce a s
 
 ---
 
-## 5. Configuration Reference
+## 6. Configuration Reference
 
 | Setting | Default | Description |
 | :--- | :--- | :--- |
